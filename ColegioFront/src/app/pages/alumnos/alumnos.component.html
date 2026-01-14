@@ -1,0 +1,41 @@
+<div class="dashboard-panel">
+  <h2>👨‍🎓 Gestión de Alumnos</h2>
+  
+  <div class="filtros-dashboard">
+    <input type="text" [(ngModel)]="alumnoForm.nombre" placeholder="Nombre" style="flex: 1;">
+    <input type="text" [(ngModel)]="alumnoForm.apellido" placeholder="Apellido" style="flex: 1;">
+    <input type="number" [(ngModel)]="alumnoForm.edad" placeholder="Edad" style="width: 100px;">
+
+    <button (click)="guardar()" class="btn-guardar">
+      {{ alumnoForm.id === 0 ? '💾 Guardar' : '🔄 Actualizar' }}
+    </button>
+    
+    <button *ngIf="alumnoForm.id !== 0" (click)="limpiarFormulario()" class="btn-cancelar">
+      ❌ Cancelar
+    </button>
+  </div>
+</div>
+
+<table class="tabla-datos">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Nombre</th>
+      <th>Apellido</th>
+      <th>Edad</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let alu of listaAlumnos">
+      <td>{{ alu.id }}</td>
+      <td>{{ alu.nombre }}</td>
+      <td>{{ alu.apellido }}</td>
+      <td>{{ alu.edad }}</td>
+      <td>
+        <button (click)="editar(alu)" class="btn-editar">✏️ Editar</button>
+        <button (click)="borrar(alu.id)" class="btn-borrar">🗑️ Borrar</button>
+      </td>
+    </tr>
+  </tbody>
+</table>

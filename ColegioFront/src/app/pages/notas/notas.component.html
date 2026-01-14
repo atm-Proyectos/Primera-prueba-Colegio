@@ -1,0 +1,53 @@
+<div class="dashboard-panel">
+  <h2>📝 Gestión de Notas</h2>
+  
+  <div class="filtros-dashboard">
+    <select [(ngModel)]="formNota.alumnoId" name="alumnoId" style="flex: 1;">
+      <option [ngValue]="null">-- Selecciona Alumno --</option>
+      <option *ngFor="let alu of listaAlumnos" [ngValue]="alu.id">
+        {{ alu.nombre }} {{ alu.apellido }}
+      </option> 
+    </select>
+
+    <select [(ngModel)]="formNota.asignaturaId" name="asignaturaId" style="flex: 1;">
+      <option [ngValue]="null">-- Selecciona Asignatura --</option>
+      <option *ngFor="let asig of listaAsignaturas" [ngValue]="asig.id">
+        {{ asig.clase }}
+      </option>
+    </select>
+
+    <input type="number" [(ngModel)]="formNota.valor" placeholder="Nota (0-10)" style="width: 100px;">
+
+    <button (click)="guardar()" class="btn-guardar">
+      {{ formNota.id === 0 ? '💾 Guardar' : '🔄 Actualizar' }}
+    </button>
+    
+    <button *ngIf="formNota.id !== 0" (click)="limpiar()" class="btn-cancelar">❌</button>
+  </div>
+</div>
+
+<table class="tabla-datos">
+  <thead>
+    <tr>
+      <th>Alumno</th>
+      <th>Asignatura</th>
+      <th>Nota</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let nota of listaNotas">
+      <td>{{ nota.alumnoNombre || nota.alumnoId }}</td>
+      <td>{{ nota.asignaturaNombre || nota.asignaturaId }}</td>
+      
+      <td [style.color]="nota.valor >= 5 ? '#2ecc71' : '#e74c3c'" style="font-weight: bold;">
+        {{ nota.valor }}
+      </td>
+      
+      <td>
+        <button (click)="editar(nota)" class="btn-editar">✏️</button>
+        <button (click)="borrar(nota.id)" class="btn-borrar">🗑️</button>
+      </td>
+    </tr>
+  </tbody>
+</table>

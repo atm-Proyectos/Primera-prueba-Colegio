@@ -1,0 +1,41 @@
+<div class="dashboard-panel">
+    <h2>📚 Gestión de Asignaturas</h2>
+
+    <div>
+        <input type="text" [(ngModel)]="formAsig.clase" placeholder="Nombre Clase (ej: Matemáticas)" style="flex: 1;">
+        <input type="text" [(ngModel)]="formAsig.profesor" placeholder="Profesor" style="flex: 1;">
+
+        <button (click)="guardar()" class="btn-guardar">
+            {{formAsig.id === 0 ? '💾 Guardar' : '🔄 Actualizar'}}
+        </button>
+
+        <button *ngIf="formAsig.id !==0" (click)="limpiar()" class="btn-cancelar">❌ Cancelar</button>
+    </div>
+
+</div>
+
+<table class="tabla-datos">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Clase</th>
+            <th>Profesor</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let item of listaAsig">
+            <td>{{item.id}}</td>
+            <td>{{item.clase}}</td>
+            <td>{{item.profesor}}</td>
+            <td>
+                <button (click)="editar(item)" class="btn-editar">
+                    ✏️ Editar
+                </button>
+                <button (click)="borrar(item.id)" class="btn-borrar">
+                    🗑️ Borrar
+                </button>
+            </td>
+        </tr>
+    </tbody>
+</table>

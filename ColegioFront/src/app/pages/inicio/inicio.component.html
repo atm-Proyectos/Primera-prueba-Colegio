@@ -1,0 +1,50 @@
+<div class="dashboard-panel">
+  <h2>🚀 Panel de Control</h2>
+  <p style="color: #7f8c8d; margin-bottom: 20px;">
+    Busca notas por alumno o asignatura en tiempo real.
+  </p>
+
+  <div class="buscador-wrap">
+    <input 
+      type="text" 
+      class="input-grande"
+      placeholder="🔎 Escribe para filtrar (ej: Juan, Mates...)" 
+      [(ngModel)]="busqueda"
+      (keyup)="filtrar()"
+    >
+  </div>
+</div>
+
+<table class="tabla-datos">
+  <thead>
+    <tr>
+      <th>Alumno</th>
+      <th>Asignatura</th>
+      <th>Nota</th>
+      <th>Estado</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let item of resultados">
+      <td>{{ item.alumnoNombre }}</td>
+      
+      <td>{{ item.asignaturaNombre }}</td>
+      
+      <td>
+        {{ item.valor }}
+      </td>
+
+      <td>
+        <span [class]="item.valor >= 5 ? 'badge-aprobado' : 'badge-suspenso'">
+          {{ item.valor >= 5 ? 'Aprobado' : 'Suspenso' }}
+        </span>
+      </td>
+    </tr>
+
+    <tr *ngIf="resultados.length === 0">
+      <td colspan="4" style="text-align: center; padding: 30px; color: #95a5a6;">
+        🕵️ No se encontraron coincidencias...
+      </td>
+    </tr>
+  </tbody>
+</table>
