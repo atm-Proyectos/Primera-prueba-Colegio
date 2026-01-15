@@ -9,7 +9,7 @@ import { ApiService } from '../../services/api.service';
 export class AlumnosComponent implements OnInit {
   listaAlumnos: any[] = [];
   
-  // Objeto para el formulario (vinculado con ngModel)
+  // Objeto para el formulario
   alumnoForm = {
     id: 0,
     nombre: '',
@@ -44,7 +44,7 @@ export class AlumnosComponent implements OnInit {
     }
   }
 
-  // Función para llenar el formulario al dar a Editar
+  // Función para rellenar el formulario al dar a Editar
   editar(alumno: any) {
     this.alumnoForm = { ...alumno };
   }

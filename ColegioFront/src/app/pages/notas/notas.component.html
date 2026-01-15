@@ -1,16 +1,16 @@
 <div class="dashboard-panel">
-  <h2>📝 Gestión de Notas</h2>
+  <h2>📝 Gestión de las Notas</h2>
   
   <div class="filtros-dashboard">
     <select [(ngModel)]="formNota.alumnoId" name="alumnoId" style="flex: 1;">
-      <option [ngValue]="null">-- Selecciona Alumno --</option>
+      <option [ngValue]="null">-- Selecciona al Alumno --</option>
       <option *ngFor="let alu of listaAlumnos" [ngValue]="alu.id">
         {{ alu.nombre }} {{ alu.apellido }}
       </option> 
     </select>
 
     <select [(ngModel)]="formNota.asignaturaId" name="asignaturaId" style="flex: 1;">
-      <option [ngValue]="null">-- Selecciona Asignatura --</option>
+      <option [ngValue]="null">-- Selecciona la Asignatura --</option>
       <option *ngFor="let asig of listaAsignaturas" [ngValue]="asig.id">
         {{ asig.clase }}
       </option>
