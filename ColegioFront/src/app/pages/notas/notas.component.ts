@@ -11,37 +11,72 @@ export class NotasComponent implements OnInit {
   listaNotas: any[] = [];
   listaAlumnos: any[] = [];
   listaAsignaturas: any[] = [];
+  mensajeError: string = "";
+  cargando: boolean = true;
 
   // Formulario con ID
-  formNota = { id: 0, alumnoId: 0, asignaturaId: 0, valor: 0 };
+  formNota = { id: 0, alumnoId: null, asignaturaId: null, valor: 0 };
+
   constructor(private api: ApiService) {}
 
-  ngOnInit() {
-    this.cargarDatos();
+  ngOnInit(): void{
+    this.cargarAlumnos();
+    this.cargarAsignaturas();
+    this.cargarNotas();
   }
 
-  cargarDatos() {
-    //1 NOTAS
-    this.api.getNotas().subscribe(data => this.listaNotas = data);
-    //2 ALUMNOS
+  cargarAlumnos() {
     this.api.getAlumnos().subscribe(data => this.listaAlumnos = data);
-    //3 ASIGNATURAS
+  }
+
+  cargarAsignaturas() {
     this.api.getAsignaturas().subscribe(data => this.listaAsignaturas = data);
   }
 
+  cargarNotas() {
+    this.cargando = true;
+    this.api.getNotas().subscribe({
+      next: (data) => {
+        this.listaNotas = data;
+        this.cargando = false;
+      },
+      error: (err) => {
+        console.error(err);
+        this.cargando = false;
+      }
+    });
+  }
+
   guardar() {
+    // Limpiamos errores previos
+    this.mensajeError = "";
+
     if (this.formNota.id === 0) {
-      this.api.guardarNota(this.formNota).subscribe(() => {
-        this.cargarDatos();
-        this.limpiar();
+      // CREAR
+      this.api.guardarNota(this.formNota).subscribe({
+        next: () => {
+          this.cargarNotas();
+          this.limpiar();
+        },
+        error: (err) => {
+          console.error("Error del backend:", err);
+          this.mensajeError = "🛑 Error: Revisa los datos (Nota 0-10 y campos obligatorios).";
+        }
       });
     } else {
-      this.api.editarNota(this.formNota.id, this.formNota).subscribe(() => {
-        this.cargarDatos();
-        this.limpiar();
+      // ACTUALIZAR
+      this.api.editarNota(this.formNota.id, this.formNota).subscribe({
+        next: () => {
+          this.cargarNotas();
+          this.limpiar();
+        },
+        error: (err) => {
+          console.error("Error del backend:", err);
+          this.mensajeError = "🛑 Error: No se pudo actualizar. Revisa los límites.";
+        }
       });
     }
-    }
+  }
 
     editar(item: any) {
       this.formNota = { 
@@ -54,12 +89,12 @@ export class NotasComponent implements OnInit {
 
     borrar(id: number) {
       if(confirm('¿Borrar esta nota?')) {
-        this.api.eliminarNota(id).subscribe(() => this.cargarDatos());
+        this.api.eliminarNota(id).subscribe(() => this.cargarNotas());
       }
     }
 
     limpiar() {
-      this.formNota = { id: 0, alumnoId: 0, asignaturaId: 0, valor: 0 };
+      this.formNota = { id: 0, alumnoId: null, asignaturaId: null, valor: 0 };
     }
   }
 

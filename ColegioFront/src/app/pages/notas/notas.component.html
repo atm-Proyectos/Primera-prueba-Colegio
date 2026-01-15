@@ -1,32 +1,60 @@
 <div class="dashboard-panel">
   <h2>📝 Gestión de las Notas</h2>
   
-  <div class="filtros-dashboard">
-    <select [(ngModel)]="formNota.alumnoId" name="alumnoId" style="flex: 1;">
-      <option [ngValue]="null">-- Selecciona al Alumno --</option>
-      <option *ngFor="let alu of listaAlumnos" [ngValue]="alu.id">
-        {{ alu.nombre }} {{ alu.apellido }}
-      </option> 
-    </select>
-
-    <select [(ngModel)]="formNota.asignaturaId" name="asignaturaId" style="flex: 1;">
-      <option [ngValue]="null">-- Selecciona la Asignatura --</option>
-      <option *ngFor="let asig of listaAsignaturas" [ngValue]="asig.id">
-        {{ asig.clase }}
-      </option>
-    </select>
-
-    <input type="number" [(ngModel)]="formNota.valor" placeholder="Nota (0-10)" style="width: 100px;">
-
-    <button (click)="guardar()" class="btn-guardar">
-      {{ formNota.id === 0 ? '💾 Guardar' : '🔄 Actualizar' }}
-    </button>
-    
-    <button *ngIf="formNota.id !== 0" (click)="limpiar()" class="btn-cancelar">❌</button>
+  <div *ngIf="mensajeError" class="alerta-error">
+    {{ mensajeError }}
   </div>
+
+  <form #miForm="ngForm" (ngSubmit)="guardar()">
+
+    <div class="filtros-dashboard">
+      
+      <select [(ngModel)]="formNota.alumnoId" name="alumnoId" required aria-label="Seleccionar Alumno" style="flex: 1;">
+        <option [ngValue]="null">-- Selecciona al Alumno --</option>
+        <option *ngFor="let alu of listaAlumnos" [ngValue]="alu.id">
+          {{ alu.nombre }} {{ alu.apellido }}
+        </option> 
+      </select>
+
+      <select [(ngModel)]="formNota.asignaturaId" name="asignaturaId" required aria-label="Seleccionar Asignatura" style="flex: 1;">
+        <option [ngValue]="null">-- Selecciona la Asignatura --</option>
+        <option *ngFor="let asig of listaAsignaturas" [ngValue]="asig.id">
+          {{ asig.clase }}
+        </option>
+      </select>
+
+      <div style="display:flex; flex-direction:column;">
+        <input type="number"  
+               [(ngModel)]="formNota.valor" 
+               name="valorNota" 
+               required min="0" max="10"
+               #campoNota="ngModel"
+               placeholder="Nota (0-10)" 
+               style="width: 100px;">
+        
+        <small *ngIf="campoNota.invalid && (campoNota.dirty || campoNota.touched)" style="color:red; font-size: 0.7rem;">
+           0 a 10
+        </small>
+      </div>
+
+      <button type="submit" 
+              class="btn-guardar"
+              [disabled]="miForm.invalid || cargando"
+              [title]="miForm.invalid ? 'Rellena todos los campos correctamente' : 'Guardar'">
+        {{ formNota.id === 0 ? '💾 Guardar' : '🔄 Actualizar' }}
+      </button>
+      
+      <button *ngIf="formNota.id !== 0" type="button" (click)="limpiar()" class="btn-cancelar">❌</button>
+    </div>
+  </form>
 </div>
 
-<table class="tabla-datos">
+<div *ngIf="cargando" class="loading-container">
+  <div class="spinner"></div>
+  <p>Cargando datos del colegio...</p>
+</div>
+
+<table class="tabla-datos" *ngIf="!cargando">
   <thead>
     <tr>
       <th>Alumno</th>
