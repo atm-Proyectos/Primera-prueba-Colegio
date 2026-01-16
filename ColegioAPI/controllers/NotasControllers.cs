@@ -47,7 +47,7 @@ namespace ColegioAPI.Controllers
                 .Include(n => n.Alumno)
                 .Include(n => n.Asignatura)
                 .Where(n =>
-                    n.Alumno.Nombre.ToLower().Contains(texto.ToLower()) || // Truco: convertimos a minúsculas para buscar mejor
+                    n.Alumno.Nombre.ToLower().Contains(texto.ToLower()) ||
                     n.Alumno.Apellido.ToLower().Contains(texto.ToLower()) ||
                     n.Asignatura.Clase.ToLower().Contains(texto.ToLower()) ||
                     n.Valor.ToString().Contains(texto)
@@ -70,12 +70,26 @@ namespace ColegioAPI.Controllers
         // ==========================================
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Notas>>> GetNotas()
+        public async Task<ActionResult<IEnumerable<object>>> GetNotas()
         {
-            return await _context.Notas
-                .Include(n => n.Alumno)
-                .Include(n => n.Asignatura)
+            // Esto busca la nota Y TAMBIÉN la información del Alumno y la Asignatura
+            var notas = await _context.Notas
+                .Include(n => n.Alumno)      // Carga datos del alumno
+                .Include(n => n.Asignatura)  // Carga datos de la asignatura
+                .Select(n => new
+                {
+                    id = n.Id,
+                    valor = n.Valor,
+                    alumnoId = n.AlumnoId,
+                    asignaturaId = n.AsignaturaId,
+
+                    // Aquí creamos los textos que verás en la tabla
+                    nombreAlumno = n.Alumno.Nombre + " " + n.Alumno.Apellido, // Juntamos nombre y apellido
+                    nombreAsignatura = n.Asignatura.Clase
+                })
                 .ToListAsync();
+
+            return Ok(notas);
         }
 
         // POST
