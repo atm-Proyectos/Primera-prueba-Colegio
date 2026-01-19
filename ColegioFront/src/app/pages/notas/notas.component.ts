@@ -6,96 +6,122 @@ import { ApiService } from 'src/app/services/api.service';
   templateUrl: './notas.component.html',
   styleUrls: ['./notas.component.css']
 })
-
 export class NotasComponent implements OnInit {
   listaNotas: any[] = [];
   listaAlumnos: any[] = [];
-  listaAsignaturas: any[] = [];
+  listaMatriculas: any[] = [];
+
+  listaAsignaturasDelAlumno: any[] = [];
+
   mensajeError: string = "";
   cargando: boolean = true;
 
-  // Formulario con ID
-  formNota = { id: 0, alumnoId: null, asignaturaId: null, valor: 0 };
+  formSeleccion: any = { alumnoId: null, asignaturaId: null };
 
-  constructor(private api: ApiService) {}
+  // Dato real para la nota
+  valorNota: number | null = null;
+  notaIdEditar: number = 0;
 
-  ngOnInit(): void{
-    this.cargarAlumnos();
-    this.cargarAsignaturas();
-    this.cargarNotas();
+  constructor(private api: ApiService) { }
+
+  ngOnInit(): void {
+    this.cargarDatosIniciales();
   }
 
-  cargarAlumnos() {
-    this.api.getAlumnos().subscribe(data => this.listaAlumnos = data);
-  }
-
-  cargarAsignaturas() {
-    this.api.getAsignaturas().subscribe(data => this.listaAsignaturas = data);
-  }
-
-  cargarNotas() {
+  cargarDatosIniciales() {
     this.cargando = true;
-    this.api.getNotas().subscribe({
-      next: (data) => {
-        this.listaNotas = data;
-        this.cargando = false;
-      },
-      error: (err) => {
-        console.error(err);
-        this.cargando = false;
-      }
+    // Cargamos Notas, Alumnos y Matrículas a la vez
+    this.api.getNotas().subscribe(notas => {
+      this.listaNotas = notas;
+      this.api.getAlumnos().subscribe(alumnos => {
+        this.listaAlumnos = alumnos;
+        this.api.getMatriculas().subscribe(matriculas => {
+          this.listaMatriculas = matriculas;
+          this.cargando = false;
+        });
+      });
     });
   }
 
-  guardar() {
-    // Limpiamos errores previos
-    this.mensajeError = "";
+  alCambiarAlumno() {
+    this.formSeleccion.asignaturaId = null;
+    this.listaAsignaturasDelAlumno = [];
 
-    if (this.formNota.id === 0) {
-      // CREAR
-      this.api.guardarNota(this.formNota).subscribe({
-        next: () => {
-          this.cargarNotas();
-          this.limpiar();
-        },
-        error: (err) => {
-          console.error("Error del backend:", err);
-          this.mensajeError = "🛑 Error: Revisa los datos (Nota 0-10 y campos obligatorios).";
-        }
-      });
-    } else {
-      // ACTUALIZAR
-      this.api.editarNota(this.formNota.id, this.formNota).subscribe({
-        next: () => {
-          this.cargarNotas();
-          this.limpiar();
-        },
-        error: (err) => {
-          console.error("Error del backend:", err);
-          this.mensajeError = "🛑 Error: No se pudo actualizar. Revisa los límites.";
-        }
-      });
-    }
-  }
+    if (this.formSeleccion.alumnoId) {
+      const matriculas = this.listaMatriculas.filter(m => m.alumnoId == this.formSeleccion.alumnoId);
 
-    editar(item: any) {
-      this.formNota = { 
-        id: item.id,
-        alumnoId: item.alumnoId,
-        asignaturaId: item.asignaturaId,
-        valor: item.valor
-       };
-    }
+      // Mapeamos para sacar solo Nombre asignatura y el ID de la asignatura original
+      this.listaAsignaturasDelAlumno = matriculas.map(m => ({
+        idAsignaturaReal: m.asignaturaId,
+        nombreAsignatura: m.asignatura
+      }));
 
-    borrar(id: number) {
-      if(confirm('¿Borrar esta nota?')) {
-        this.api.eliminarNota(id).subscribe(() => this.cargarNotas());
+      if (this.listaAsignaturasDelAlumno.length === 0) {
+        alert("Este alumno no está matriculado en ninguna asignatura. Ve a 'Alumnos' y matricúlalo primero.");
       }
     }
+  }
 
-    limpiar() {
-      this.formNota = { id: 0, alumnoId: null, asignaturaId: null, valor: 0 };
+  guardar() {
+    this.mensajeError = "";
+
+    // 1. BUSCAR EL ID DE LA MATRÍCULA
+    const matriculaEncontrada = this.listaMatriculas.find(m =>
+      m.alumnoId == this.formSeleccion.alumnoId &&
+      m.asignaturaId == this.formSeleccion.asignaturaId
+    );
+
+    if (!matriculaEncontrada) {
+      this.mensajeError = "🛑 Error: No se encuentra la matrícula. Asegúrate de que el alumno está matriculado.";
+      return;
+    }
+
+    // 2. Preparar el objeto para el Backend
+    const notaParaEnviar = {
+      id: this.notaIdEditar,
+      valor: this.valorNota,
+      asignaturaAlumnoId: matriculaEncontrada.id
+    };
+
+    // 3. Enviar
+    if (this.notaIdEditar === 0) {
+      this.api.guardarNota(notaParaEnviar).subscribe({
+        next: () => { this.cargarDatosIniciales(); this.limpiar(); },
+        error: (err) => { console.error(err); this.mensajeError = "🛑 Error al guardar."; }
+      });
+    } else {
+      this.api.editarNota(this.notaIdEditar, notaParaEnviar).subscribe({
+        next: () => { this.cargarDatosIniciales(); this.limpiar(); },
+        error: (err) => { console.error(err); this.mensajeError = "🛑 Error al editar."; }
+      });
     }
   }
 
+  editar(nota: any) {
+    this.notaIdEditar = nota.id;
+    this.valorNota = nota.valor;
 
+    // Rellenar los combos visualmente
+    this.formSeleccion.alumnoId = nota.alumnoId;
+    this.alCambiarAlumno();
+
+    // Pequeño retardo para que dé tiempo a cargarse el combo antes de seleccionar
+    setTimeout(() => {
+      this.formSeleccion.asignaturaId = nota.asignaturaId;
+    }, 100);
+  }
+
+  limpiar() {
+    this.notaIdEditar = 0;
+    this.valorNota = null;
+    this.formSeleccion = { alumnoId: null, asignaturaId: null };
+    this.listaAsignaturasDelAlumno = [];
+    this.mensajeError = "";
+  }
+
+  eliminar(id: number) {
+    if (confirm("¿Borrar nota?")) {
+      this.api.eliminarNota(id).subscribe(() => this.cargarDatosIniciales());
+    }
+  }
+}

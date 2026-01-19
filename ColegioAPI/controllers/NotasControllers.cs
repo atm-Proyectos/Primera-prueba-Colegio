@@ -18,9 +18,7 @@ namespace ColegioAPI.Controllers
             _context = context;
         }
 
-        // ==========================================
         //  MÉTODO BUSCADOR
-        // ==========================================
         [HttpGet("buscar")]
         public async Task<ActionResult<IEnumerable<object>>> BuscarNotas(string? texto)
         {
@@ -28,36 +26,35 @@ namespace ColegioAPI.Controllers
             {
                 // Si no hay texto, devolvemos las últimas 20 notas
                 return await _context.Notas
-                    .Include(n => n.Alumno)
-                    .Include(n => n.Asignatura)
+                    .Include(n => n.AsignaturaAlumno)
+                    .Include(n => n.AsignaturaAlumno.Asignatura)
                     .Take(20)
                     .Select(n => new
                     {
                         Id = n.Id,
-                        Alumno = n.Alumno.Nombre + " " + n.Alumno.Apellido,
-                        Asignatura = n.Asignatura.Clase,
-                        Profesor = n.Asignatura.Profesor,
+                        Alumno = n.AsignaturaAlumno.Alumno.Nombre + " " + n.AsignaturaAlumno.Alumno.Apellido,
+                        Asignatura = n.AsignaturaAlumno.Asignatura.Clase,
+                        Profesor = n.AsignaturaAlumno.Asignatura.Profesor,
                         Valor = n.Valor
                     })
                     .ToListAsync();
             }
 
-            // BÚSQUEDA PROFESIONAL
             var resultados = await _context.Notas
-                .Include(n => n.Alumno)
-                .Include(n => n.Asignatura)
+                .Include(n => n.AsignaturaAlumno)
+                .Include(n => n.AsignaturaAlumno.Asignatura)
                 .Where(n =>
-                    n.Alumno.Nombre.ToLower().Contains(texto.ToLower()) ||
-                    n.Alumno.Apellido.ToLower().Contains(texto.ToLower()) ||
-                    n.Asignatura.Clase.ToLower().Contains(texto.ToLower()) ||
+                    n.AsignaturaAlumno.Alumno.Nombre.ToLower().Contains(texto.ToLower()) ||
+                    n.AsignaturaAlumno.Alumno.Apellido.ToLower().Contains(texto.ToLower()) ||
+                    n.AsignaturaAlumno.Asignatura.Clase.ToLower().Contains(texto.ToLower()) ||
                     n.Valor.ToString().Contains(texto)
                  )
                 .Select(n => new
                 {
                     Id = n.Id,
-                    Alumno = n.Alumno.Nombre + " " + n.Alumno.Apellido,
-                    Asignatura = n.Asignatura.Clase,
-                    Profesor = n.Asignatura.Profesor,
+                    Alumno = n.AsignaturaAlumno.Alumno.Nombre + " " + n.AsignaturaAlumno.Alumno.Apellido,
+                    Asignatura = n.AsignaturaAlumno.Asignatura.Clase,
+                    Profesor = n.AsignaturaAlumno.Asignatura.Profesor,
                     Valor = n.Valor
                 })
                 .ToListAsync();
@@ -65,27 +62,23 @@ namespace ColegioAPI.Controllers
             return Ok(resultados);
         }
 
-        // ==========================================
         //  MÉTODOS BÁSICOS (CRUD)
-        // ==========================================
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetNotas()
         {
-            // Esto busca la nota Y TAMBIÉN la información del Alumno y la Asignatura
             var notas = await _context.Notas
-                .Include(n => n.Alumno)      // Carga datos del alumno
-                .Include(n => n.Asignatura)  // Carga datos de la asignatura
+                .Include(n => n.AsignaturaAlumno)
+                .Include(n => n.AsignaturaAlumno.Asignatura)
                 .Select(n => new
                 {
                     id = n.Id,
                     valor = n.Valor,
-                    alumnoId = n.AlumnoId,
-                    asignaturaId = n.AsignaturaId,
+                    alumnoId = n.AsignaturaAlumno.AlumnoId,
+                    asignaturaId = n.AsignaturaAlumno.AsignaturaId,
 
-                    // Aquí creamos los textos que verás en la tabla
-                    nombreAlumno = n.Alumno.Nombre + " " + n.Alumno.Apellido, // Juntamos nombre y apellido
-                    nombreAsignatura = n.Asignatura.Clase
+                    nombreAlumno = n.AsignaturaAlumno.Alumno.Nombre + " " + n.AsignaturaAlumno.Alumno.Apellido,
+                    nombreAsignatura = n.AsignaturaAlumno.Asignatura.Clase
                 })
                 .ToListAsync();
 

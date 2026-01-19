@@ -1,57 +1,44 @@
 <div class="dashboard-panel">
   <h2>📝 Gestión de las Notas</h2>
-  
+
   <div *ngIf="mensajeError" class="alerta-error">
     {{ mensajeError }}
   </div>
 
-  <form #miForm="ngForm" (ngSubmit)="guardar()">
-
+  <form (ngSubmit)="guardar()">
     <div class="filtros-dashboard">
-      
-      <select [(ngModel)]="formNota.alumnoId" name="alumnoId" required aria-label="Seleccionar Alumno" style="flex: 1;">
-        <option [ngValue]="null">-- Selecciona al Alumno --</option>
+
+      <select [(ngModel)]="formSeleccion.alumnoId" name="alumnoId" required style="flex: 1;"
+        (change)="alCambiarAlumno()">
+        <option [ngValue]="null">-- 1. Selecciona Alumno --</option>
         <option *ngFor="let alu of listaAlumnos" [ngValue]="alu.id">
           {{ alu.nombre }} {{ alu.apellido }}
-        </option> 
-      </select>
-
-      <select [(ngModel)]="formNota.asignaturaId" name="asignaturaId" required aria-label="Seleccionar Asignatura" style="flex: 1;">
-        <option [ngValue]="null">-- Selecciona la Asignatura --</option>
-        <option *ngFor="let asig of listaAsignaturas" [ngValue]="asig.id">
-          {{ asig.clase }}
         </option>
       </select>
 
-      <div style="display:flex; flex-direction:column;">
-        <input type="number"  
-               [(ngModel)]="formNota.valor" 
-               name="valorNota" 
-               required min="0" max="10"
-               #campoNota="ngModel"
-               placeholder="Nota (0-10)" 
-               style="width: 100px;">
-        
-        <small *ngIf="campoNota.invalid && (campoNota.dirty || campoNota.touched)" style="color:red; font-size: 0.7rem;">
-           0 a 10
-        </small>
-      </div>
+      <select [(ngModel)]="formSeleccion.asignaturaId" name="asignaturaId" required style="flex: 1;"
+        [disabled]="!formSeleccion.alumnoId">
+        <option [ngValue]="null">-- 2. Selecciona Asignatura --</option>
+        <option *ngFor="let asig of listaAsignaturasDelAlumno" [ngValue]="asig.idAsignaturaReal">
+          {{ asig.nombreAsignatura }}
+        </option>
+      </select>
 
-      <button type="submit" 
-              class="btn-guardar"
-              [disabled]="miForm.invalid || cargando"
-              [title]="miForm.invalid ? 'Rellena todos los campos correctamente' : 'Guardar'">
-        {{ formNota.id === 0 ? '💾 Guardar' : '🔄 Actualizar' }}
+      <input type="number" [(ngModel)]="valorNota" name="valorNota" placeholder="Nota (0-10)" required min="0" max="10"
+        style="width: 100px;">
+
+      <button type="submit" class="btn-guardar" [disabled]="!valorNota || !formSeleccion.asignaturaId">
+        {{ notaIdEditar === 0 ? '💾 Guardar' : '🔄 Actualizar' }}
       </button>
-      
-      <button *ngIf="formNota.id !== 0" type="button" (click)="limpiar()" class="btn-cancelar">❌</button>
+
+      <button *ngIf="notaIdEditar !== 0" type="button" (click)="limpiar()" class="btn-cancelar">❌</button>
     </div>
   </form>
 </div>
 
 <div *ngIf="cargando" class="loading-container">
   <div class="spinner"></div>
-  <p>Cargando datos del colegio...</p>
+  <p>Cargando datos...</p>
 </div>
 
 <table class="tabla-datos" *ngIf="!cargando">
@@ -65,17 +52,21 @@
   </thead>
   <tbody>
     <tr *ngFor="let nota of listaNotas">
-      <td>{{ nota.alumnoNombre || nota.alumnoId }}</td>
-      <td>{{ nota.asignaturaNombre || nota.asignaturaId }}</td>
-      
-      <td [style.color]="nota.valor >= 5 ? '#2ecc71' : '#e74c3c'" style="font-weight: bold;">
+      <td>{{ nota.nombreAlumno }}</td>
+      <td>{{ nota.nombreAsignatura }}</td>
+
+      <td [style.color]="nota.valor >= 5 ? 'green' : 'red'" style="font-weight: bold;">
         {{ nota.valor }}
       </td>
-      
+
       <td>
         <button (click)="editar(nota)" class="btn-editar">✏️</button>
-        <button (click)="borrar(nota.id)" class="btn-borrar">🗑️</button>
+        <button (click)="eliminar(nota.id)" class="btn-borrar">🗑️</button>
       </td>
+    </tr>
+    <tr *ngIf="listaNotas.length === 0">
+      <td colspan="4" style="text-align: center; color: #666;">No hay notas registradas. Recuerda matricular alumnos
+        primero.</td>
     </tr>
   </tbody>
 </table>

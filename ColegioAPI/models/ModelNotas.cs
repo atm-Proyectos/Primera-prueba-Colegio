@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ColegioAPI.models
 {
@@ -10,12 +11,9 @@ namespace ColegioAPI.models
         [Range(0, 10, ErrorMessage = "El valor debe estar entre 0 y 10")]
         public decimal Valor { get; set; }
 
-        [Required(ErrorMessage = "El alumno es obligatorio")]
-        public int AlumnoId { get; set; }
-        public Alumnos? Alumno { get; set; }
-
-        [Required(ErrorMessage = "La asignatura es obligatoria")]
-        public int AsignaturaId { get; set; }
-        public Asignaturas? Asignatura { get; set; }
+        [Required]
+        public int AsignaturaAlumnoId { get; set; }
+        [ForeignKey("AsignaturaAlumnoId")]
+        public AsignaturaAlumno? AsignaturaAlumno { get; set; }
     }
 }

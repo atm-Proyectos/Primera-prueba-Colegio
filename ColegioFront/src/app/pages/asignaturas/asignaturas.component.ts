@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ApiService } from '../../services/api.service';
+import { ApiService } from 'src/app/services/api.service';
 
 @Component({
   selector: 'app-asignaturas',
@@ -7,38 +7,57 @@ import { ApiService } from '../../services/api.service';
   styleUrls: ['./asignaturas.component.css']
 })
 export class AsignaturasComponent implements OnInit {
-  listaAsig: any[] = [];
-  formAsig = { id: 0, clase: '', profesor: '' };
+  listaAsignaturas: any[] = [];
 
-  constructor(private api: ApiService) {}
+  formAsignatura = { id: 0, clase: "", profesor: "" };
 
-  ngOnInit() { this.cargar(); }
+  mensajeError: string = "";
+  cargando: boolean = true;
 
-  cargar() {
-    this.api.getAsignaturas().subscribe(data => this.listaAsig = data);
+  constructor(private api: ApiService) { }
+
+  ngOnInit(): void {
+    this.cargarAsignaturas();
+  }
+
+  cargarAsignaturas() {
+    this.cargando = true;
+    this.api.getAsignaturas().subscribe({
+      next: (data) => {
+        this.listaAsignaturas = data;
+        this.cargando = false;
+      },
+      error: (err) => { console.error(err); this.cargando = false; }
+    });
   }
 
   guardar() {
-    if (this.formAsig.id === 0) {
-      this.api.guardarAsignatura(this.formAsig).subscribe(() => {
-        this.cargar();
-        this.limpiar();
+    this.mensajeError = "";
+    if (this.formAsignatura.id === 0) {
+      this.api.guardarAsignatura(this.formAsignatura).subscribe({
+        next: () => { this.cargarAsignaturas(); this.limpiar(); },
+        error: (err) => { console.error(err); this.mensajeError = "🛑 Error al crear."; }
       });
     } else {
-      this.api.editarAsignatura(this.formAsig.id, this.formAsig).subscribe(() => {
-        this.cargar();
-        this.limpiar();
+      this.api.editarAsignatura(this.formAsignatura.id, this.formAsignatura).subscribe({
+        next: () => { this.cargarAsignaturas(); this.limpiar(); },
+        error: (err) => { console.error(err); this.mensajeError = "🛑 Error al actualizar."; }
       });
     }
   }
 
-  editar(item: any) { this.formAsig = { ...item }; }
-  
-  borrar(id: number) {
-    if(confirm('¿Borrar asignatura?')) {
-      this.api.eliminarAsignatura(id).subscribe(() => this.cargar());
+  editar(item: any) {
+    this.formAsignatura = { ...item };
+  }
+
+  eliminar(id: number) {
+    if (confirm("¿Borrar asignatura?")) {
+      this.api.eliminarAsignatura(id).subscribe(() => this.cargarAsignaturas());
     }
   }
 
-  limpiar() { this.formAsig = { id: 0, clase: '', profesor: '' }; }
+  limpiar() {
+    this.formAsignatura = { id: 0, clase: "", profesor: "" };
+    this.mensajeError = "";
+  }
 }

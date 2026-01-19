@@ -1,31 +1,32 @@
 .dashboard-panel h2 {
-    margin-bottom: 20px;
-    color: #2c3e50;
-    font-size: 1.5rem;
+  margin-bottom: 20px;
+  color: #2c3e50;
+  font-size: 1.5rem;
 }
 
 .tabla-datos {
-    margin-top: 20px;
+  margin-top: 20px;
 }
 
 select {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background-color: white;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: white;
 }
 
 .alerta-error {
-    background-color: #f8d7da;
-    color: #721c24;
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #f5c6cb;
-    border-radius: 5px;
-    font-weight: bold;
-    text-align: center;
-    animation: temblor 0.3s;
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #f5c6cb;
+  border-radius: 5px;
+  font-weight: bold;
+  text-align: center;
+  animation: temblor 0.3s;
 }
+
 /* --- ESTILOS DEL BOTÓN BLOQUEADO --- */
 button:disabled {
   background-color: #cccccc;
@@ -54,13 +55,33 @@ button:disabled {
 }
 
 @keyframes girar {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
+
 @keyframes temblor {
-  0% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  50% { transform: translateX(5px); }
-  75% { transform: translateX(-5px); }
-  100% { transform: translateX(0); }
+  0% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-5px);
+  }
+
+  50% {
+    transform: translateX(5px);
+  }
+
+  75% {
+    transform: translateX(-5px);
+  }
+
+  100% {
+    transform: translateX(0);
+  }
 }

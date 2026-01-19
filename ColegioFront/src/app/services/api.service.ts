@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private url = 'http://localhost:5141/api'; 
+  private url = 'http://localhost:5141/api';
 
   constructor(private http: HttpClient) { }
 
@@ -25,9 +25,26 @@ export class ApiService {
   guardarNota(dato: any) { return this.http.post(`${this.url}/Notas`, dato); }
   editarNota(id: number, dato: any) { return this.http.put(`${this.url}/Notas/${id}`, dato); }
   eliminarNota(id: number) { return this.http.delete(`${this.url}/Notas/${id}`); }
-  
+
   // BUSCADOR GLOBAL
   buscarNotas(texto: string): Observable<any[]> {
     return this.http.get<any[]>(`${this.url}/Notas/buscar?texto=${texto}`);
+  }
+
+  // --- MATRICULAS (ASIGNATURA_ALUMNOS) ---
+
+  // Obtener todas las matrículas
+  getMatriculas() {
+    return this.http.get<any[]>(`${this.url}/AsignaturaAlumnos`);
+  }
+
+  // Matricular (Ojo a los parámetros, coinciden con tu controlador)
+  matricular(alumnoId: number, asignaturaId: number) {
+    return this.http.post(`${this.url}/AsignaturaAlumnos?alumnoId=${alumnoId}&asignaturaId=${asignaturaId}`, {});
+  }
+
+  // Borrar matrícula
+  desmatricular(id: number) {
+    return this.http.delete(`${this.url}/AsignaturaAlumnos/${id}`);
   }
 }
