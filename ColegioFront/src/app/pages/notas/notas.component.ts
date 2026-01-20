@@ -100,12 +100,10 @@ export class NotasComponent implements OnInit {
   editar(nota: any) {
     this.notaIdEditar = nota.id;
     this.valorNota = nota.valor;
-
-    // Rellenar los combos visualmente
     this.formSeleccion.alumnoId = nota.alumnoId;
     this.alCambiarAlumno();
 
-    // Pequeño retardo para que dé tiempo a cargarse el combo antes de seleccionar
+    // Pequeño retardo
     setTimeout(() => {
       this.formSeleccion.asignaturaId = nota.asignaturaId;
     }, 100);
@@ -122,6 +120,13 @@ export class NotasComponent implements OnInit {
   eliminar(id: number) {
     if (confirm("¿Borrar nota?")) {
       this.api.eliminarNota(id).subscribe(() => this.cargarDatosIniciales());
+    }
+  }
+
+  validarRango() {
+    if (this.valorNota !== null) {
+      if (this.valorNota < 0) this.valorNota = 0;
+      if (this.valorNota > 10) this.valorNota = 10;
     }
   }
 }

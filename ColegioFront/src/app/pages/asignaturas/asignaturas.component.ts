@@ -33,17 +33,17 @@ export class AsignaturasComponent implements OnInit {
 
   guardar() {
     this.mensajeError = "";
-    if (this.formAsignatura.id === 0) {
-      this.api.guardarAsignatura(this.formAsignatura).subscribe({
-        next: () => { this.cargarAsignaturas(); this.limpiar(); },
-        error: (err) => { console.error(err); this.mensajeError = "🛑 Error al crear."; }
-      });
-    } else {
-      this.api.editarAsignatura(this.formAsignatura.id, this.formAsignatura).subscribe({
-        next: () => { this.cargarAsignaturas(); this.limpiar(); },
-        error: (err) => { console.error(err); this.mensajeError = "🛑 Error al actualizar."; }
-      });
-    }
+    const peticion = this.formAsignatura.id === 0
+      ? this.api.guardarAsignatura(this.formAsignatura)
+      : this.api.editarAsignatura(this.formAsignatura.id, this.formAsignatura);
+
+    peticion.subscribe({
+      next: () => { this.cargarAsignaturas(); this.limpiar(); },
+      error: (err) => {
+        this.mensajeError = this.traducirError(err);
+        setTimeout(() => this.mensajeError = "", 5000);
+      }
+    });
   }
 
   editar(item: any) {
@@ -51,13 +51,31 @@ export class AsignaturasComponent implements OnInit {
   }
 
   eliminar(id: number) {
-    if (confirm("¿Borrar asignatura?")) {
-      this.api.eliminarAsignatura(id).subscribe(() => this.cargarAsignaturas());
+    if (confirm("¿Borrar asignatura? Cuidado si tiene alumnos...")) {
+      this.api.eliminarAsignatura(id).subscribe({
+        next: () => this.cargarAsignaturas(),
+        error: (err) => {
+          this.mensajeError = this.traducirError(err);
+          setTimeout(() => this.mensajeError = "", 5000);
+        }
+      })
     }
   }
 
   limpiar() {
     this.formAsignatura = { id: 0, clase: "", profesor: "" };
     this.mensajeError = "";
+  }
+
+  private traducirError(err: any): string {
+    let mensaje = err.error?.title || err.error || err.message || "";
+
+    if (mensaje.includes("Foreign key") || mensaje.includes("constraint")) {
+      return "🛑 No se puede borrar: Hay alumnos matriculados o notas puestas en esta asignatura.";
+    }
+    if (err.status === 0) return "🛑 Error de conexión con el servidor.";
+    if (err.status === 400) return "🛑 Datos inválidos.";
+
+    return "🛑 Error: " + mensaje;
   }
 }

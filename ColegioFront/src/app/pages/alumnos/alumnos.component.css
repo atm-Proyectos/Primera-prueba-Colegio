@@ -1,74 +1,18 @@
-.dashboard-panel h2 {
-    margin-bottom: 20px;
-    color: #2c3e50;
-    font-size: 1.5rem;
-}
-
-.tabla-datos {
-    margin-top: 20px;
-}
-
-/* Spinner y Alertas */
-.alerta-error {
-    background-color: #f8d7da;
-    color: #721c24;
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #f5c6cb;
-    border-radius: 5px;
-    text-align: center;
-}
-
-button:disabled {
-    background-color: #cccccc;
-    color: #666666;
-    cursor: not-allowed;
-    border: 1px solid #999999;
-}
-
-.loading-container {
-    text-align: center;
-    padding: 40px;
-    color: #666;
-}
-
-.spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #3498db;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: girar 1s linear infinite;
-    margin: 0 auto 10px auto;
-}
-
-@keyframes girar {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
 /* Botón Matricular */
 .btn-matricular {
     background-color: #9b59b6;
-    /* Morado */
     color: white;
     border: none;
     padding: 5px 10px;
     margin-left: 5px;
     border-radius: 4px;
-    cursor: pointer;
 }
 
 .btn-matricular:hover {
     background-color: #8e44ad;
 }
 
-/* Estilos del Popup (Modal) */
+/* === VENTANA MODAL === */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -76,7 +20,6 @@ button:disabled {
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.5);
-    /* Fondo oscuro transparente */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -85,20 +28,24 @@ button:disabled {
 
 .modal-content {
     background: white;
-    padding: 20px;
+    padding: 25px;
     border-radius: 10px;
     width: 400px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
 
 .form-matricula {
     display: flex;
     margin-bottom: 15px;
+    gap: 10px;
 }
 
 .lista-asignaturas {
     list-style: none;
     padding: 0;
+    margin-top: 10px;
+    max-height: 200px;
+    overflow-y: auto;
 }
 
 .lista-asignaturas li {
@@ -107,12 +54,14 @@ button:disabled {
     padding: 8px;
     display: flex;
     justify-content: space-between;
+    align-items: center;
 }
 
 .btn-borrar-peque {
     background: transparent;
     border: none;
     cursor: pointer;
+    font-size: 1.1rem;
 }
 
 .btn-cerrar-modal {
@@ -123,5 +72,8 @@ button:disabled {
     color: white;
     border: none;
     border-radius: 5px;
-    cursor: pointer;
+}
+
+.btn-cerrar-modal:hover {
+    background: #2c3e50;
 }

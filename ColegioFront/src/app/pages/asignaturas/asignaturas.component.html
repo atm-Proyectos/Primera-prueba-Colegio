@@ -6,44 +6,67 @@
     </div>
 
     <form #formAsig="ngForm" (ngSubmit)="guardar()">
-        <div class="filtros-dashboard">
-            <input type="text" [(ngModel)]="formAsignatura.clase" name="clase" required maxlength="100"
-                placeholder="Nombre Asignatura (Ej. Mates)" style="flex: 1;">
+        <div class="filtros-dashboard" style="align-items: flex-start;">
+            <div style="flex: 1;">
+                <input type="text" [(ngModel)]="formAsignatura.clase" name="clase" required maxlength="100"
+                    minlength="2" pattern="^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s\.-]+$" placeholder="Nombre Asignatura (Ej. Mates)"
+                    #clase="ngModel" [class.input-error]="clase.invalid && (clase.dirty || clase.touched)"
+                    style="width: 100%;">
 
-            <input type="text" [(ngModel)]="formAsignatura.profesor" name="profesor" required maxlength="50"
-                placeholder="Nombre del Profesor" style="flex: 1;">
+                <small *ngIf="clase.invalid && (clase.dirty || clase.touched)" class="msg-error">
+                    <div *ngIf="clase.errors?.['required']">El nombre es obligatorio.</div>
+                    <div *ngIf="clase.errors?.['minlength']">Mínimo 2 letras.</div>
+                    <div *ngIf="clase.errors?.['pattern']">Solo letras, puntos (.) o guiones (-).</div>
 
-            <button type="submit" class="btn-guardar" [disabled]="formAsig.invalid || cargando"
-                [title]="formAsig.invalid ? 'Rellena Asignatura y Profesor' : 'Guardar'">
-                {{ formAsignatura.id === 0 ? '💾 Crear' : '🔄 Actualizar' }}
-            </button>
+                </small>
+            </div>
 
-            <button *ngIf="formAsignatura.id !== 0" type="button" (click)="limpiar()" class="btn-cancelar">❌</button>
+            <div style="flex: 1;">
+                <input type="text" [(ngModel)]="formAsignatura.profesor" name="profesor" required maxlength="50"
+                    minlength="3" pattern="^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s\.-]+$" placeholder="Nombre del Profesor"
+                    #profesor="ngModel" [class.input-error]="profesor.invalid && (profesor.dirty || profesor.touched)"
+                    style="width: 100%;">
+
+                <small *ngIf="profesor.invalid && (profesor.dirty || profesor.touched)" class="msg-error">
+                    <div *ngIf="profesor.errors?.['required']">El profesor es obligatorio.</div>
+                    <div *ngIf="profesor.errors?.['minlength']">Mínimo 3 letras.</div>
+                    <div *ngIf="profesor.errors?.['pattern']">Solo letras, puntos (.) o guiones (-).</div>
+                </small>
+            </div>
+
+            <div style="display: flex; gap: 5px;">
+                <button type="submit" class="btn-guardar" [disabled]="formAsig.invalid || cargando"
+                    [title]="formAsig.invalid ? 'Corrige los campos en rojo' : 'Guardar'">
+                    {{ formAsignatura.id === 0 ? '💾 Crear' : '🔄 Actualizar' }}
+                </button>
+
+                <button *ngIf="formAsignatura.id !== 0" type="button" (click)="limpiar()"
+                    class="btn-cancelar">❌</button>
+            </div>
         </div>
     </form>
-</div>
 
-<div *ngIf="cargando" class="loading-container">
-    <div class="spinner"></div>
-    <p>Cargando asignaturas...</p>
-</div>
+    <div *ngIf="cargando" class="loading-container">
+        <div class="spinner"></div>
+        <p>Cargando asignaturas...</p>
+    </div>
 
-<table class="tabla-datos" *ngIf="!cargando">
-    <thead>
-        <tr>
-            <th>Asignatura</th>
-            <th>Profesor</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr *ngFor="let asig of listaAsignaturas">
-            <td>{{ asig.clase }}</td>
-            <td>{{ asig.profesor || '---' }}</td>
-            <td>
-                <button (click)="editar(asig)" class="btn-editar">✏️</button>
-                <button (click)="eliminar(asig.id)" class="btn-borrar">🗑️</button>
-            </td>
-        </tr>
-    </tbody>
-</table>
+    <table class="tabla-datos" *ngIf="!cargando">
+        <thead>
+            <tr>
+                <th>Asignatura</th>
+                <th>Profesor</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let asig of listaAsignaturas">
+                <td>{{ asig.clase }}</td>
+                <td>{{ asig.profesor || '---' }}</td>
+                <td>
+                    <button (click)="editar(asig)" class="btn-editar">✏️</button>
+                    <button (click)="eliminar(asig.id)" class="btn-borrar">🗑️</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>

@@ -7,10 +7,10 @@ import { ApiService } from './services/api.service';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
-  
+
   listaAlumnos: any[] = []; // Aquí guardaremos los datos
 
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService) { }
 
   // Esto se ejecuta nada más abrir la web
   ngOnInit() {
@@ -28,7 +28,7 @@ export class AppComponent implements OnInit {
   }
 
   borrar(id: number) {
-    if(confirm('¿Seguro que quieres borrar a este alumno?')) {
+    if (confirm('¿Seguro que quieres borrar a este alumno?')) {
       this.api.eliminarAlumno(id).subscribe(() => {
         this.cargarDatos(); // Recargar la tabla tras borrar
       });

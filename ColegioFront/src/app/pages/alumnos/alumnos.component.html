@@ -6,81 +6,103 @@
   </div>
 
   <form #formAlu="ngForm" (ngSubmit)="guardar()">
-    <div class="filtros-dashboard">
-      <input type="text" [(ngModel)]="formAlumno.nombre" name="nombre" required maxlength="50" placeholder="Nombre"
-        style="flex: 1;">
-      <input type="text" [(ngModel)]="formAlumno.apellido" name="apellido" required maxlength="100"
-        placeholder="Apellido" style="flex: 1;">
-      <input type="number" [(ngModel)]="formAlumno.edad" name="edad" placeholder="Edad" style="width: 80px;">
+    <div class="filtros-dashboard" style="display: flex; gap: 10px; align-items: flex-start;">
 
-      <button type="submit" class="btn-guardar" [disabled]="formAlu.invalid || cargando">
-        {{ formAlumno.id === 0 ? '💾 Crear' : '🔄 Actualizar' }}
-      </button>
+      <div style="flex: 1;">
+        <input type="text" [(ngModel)]="formAlumno.nombre" name="nombre" required minlength="2" maxlength="50"
+          pattern="^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s\.-]+$" placeholder="Nombre" #nombre="ngModel"
+          [class.input-error]="nombre.invalid && (nombre.dirty || nombre.touched)" style="width: 100%;">
 
-      <button *ngIf="formAlumno.id !== 0" type="button" (click)="limpiar()" class="btn-cancelar">❌</button>
+        <small *ngIf="nombre.invalid && (nombre.dirty || nombre.touched)" class="msg-error">
+          <div *ngIf="nombre.errors?.['required']">Obligatorio.</div>
+          <div *ngIf="nombre.errors?.['minlength']">Mínimo 2 letras.</div>
+          <div *ngIf="nombre.errors?.['pattern']">Solo letras.</div>
+        </small>
+      </div>
+
+      <div style="flex: 1;">
+        <input type="text" [(ngModel)]="formAlumno.apellido" name="apellido" required minlength="2" maxlength="100"
+          pattern="^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s\.-]+$" placeholder="Apellido" #apellido="ngModel"
+          [class.input-error]="apellido.invalid && (apellido.dirty || apellido.touched)" style="width: 100%;">
+
+        <small *ngIf="apellido.invalid && (apellido.dirty || apellido.touched)" class="msg-error">
+          <div *ngIf="apellido.errors?.['required']">Obligatorio.</div>
+          <div *ngIf="apellido.errors?.['minlength']">Mínimo 2 letras.</div>
+          <div *ngIf="apellido.errors?.['pattern']">Solo letras.</div>
+        </small>
+      </div>
+
+      <div style="width: 100px;">
+        <input type="number" [(ngModel)]="formAlumno.edad" name="edad" placeholder="Edad" required min="3" max="19"
+          #edad="ngModel" [class.input-error]="edad.invalid && (edad.dirty || edad.touched)" style="width: 100%;">
+
+        <small *ngIf="edad.invalid && (edad.dirty || edad.touched)" class="msg-error">
+          <div *ngIf="edad.errors?.['required']">Falta edad.</div>
+          <div *ngIf="edad.errors?.['min'] || edad.errors?.['max']">3-19 años.</div>
+        </small>
+      </div>
+
+      <div style="display: flex; gap: 5px;">
+        <button type="submit" class="btn-guardar" [disabled]="formAlu.invalid || cargando"
+          [title]="formAlu.invalid ? 'Rellena todos los campos correctamente' : 'Guardar'">
+          {{ formAlumno.id === 0 ? '💾 Crear' : '🔄 Actualizar' }}
+        </button>
+
+        <button *ngIf="formAlumno.id !== 0" type="button" (click)="limpiar()" class="btn-cancelar">
+          ❌
+        </button>
+      </div>
+
     </div>
   </form>
-</div>
 
-<div *ngIf="cargando" class="loading-container">
-  <div class="spinner"></div>
-  <p>Cargando alumnos...</p>
-</div>
+  <app-spinner *ngIf="cargando" texto="Cargando alumnos..."></app-spinner>
 
-<table class="tabla-datos" *ngIf="!cargando">
-  <thead>
-    <tr>
-      <th>Nombre</th>
-      <th>Apellido</th>
-      <th>Edad</th>
-      <th style="width: 180px;">Acciones</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let alumno of listaAlumnos">
-      <td>{{ alumno.nombre }}</td>
-      <td>{{ alumno.apellido }}</td>
-      <td>{{ alumno.edad }}</td>
-      <td>
-        <button (click)="editar(alumno)" class="btn-editar" title="Editar datos">✏️</button>
-        <button (click)="eliminar(alumno.id)" class="btn-borrar" title="Borrar alumno">🗑️</button>
+  <table class="tabla-datos" *ngIf="!cargando">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Apellido</th>
+        <th>Edad</th>
+        <th style="width: 180px;">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let alumno of listaAlumnos">
+        <td>{{ alumno.nombre }}</td>
+        <td>{{ alumno.apellido }}</td>
+        <td>{{ alumno.edad }} años</td>
+        <td>
+          <button (click)="editar(alumno)" class="btn-editar">✏️</button>
+          <button (click)="eliminar(alumno.id)" class="btn-borrar">🗑️</button>
+          <button (click)="abrirMatriculas(alumno)" class="btn-matricular">🎓</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 
-        <button (click)="abrirMatriculas(alumno)" class="btn-matricular" title="Matricular en asignaturas">🎓</button>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-<div class="modal-overlay" *ngIf="modoMatricula">
-  <div class="modal-content">
-    <h3>🎓 Matrículas de: {{ alumnoSeleccionado.nombre }}</h3>
-    <p style="font-size: 0.9em; color: #666;">Selecciona una asignatura para inscribirlo:</p>
-
-    <div class="form-matricula">
-      <select [(ngModel)]="asignaturaParaMatricular" style="flex:1; margin-right:5px;">
-        <option [ngValue]="null">-- Elegir Asignatura --</option>
-        <option *ngFor="let asig of listaAsignaturas" [ngValue]="asig.id">
-          {{ asig.clase }}
-        </option>
-      </select>
-      <button (click)="matricular()" class="btn-guardar" [disabled]="!asignaturaParaMatricular">
-        ➕ Añadir
-      </button>
+  <div class="modal-overlay" *ngIf="modoMatricula">
+    <div class="modal-content">
+      <h3>🎓 Matrículas de: {{ alumnoSeleccionado.nombre }}</h3>
+      <div class="form-matricula">
+        <select [(ngModel)]="asignaturaParaMatricular" style="flex:1; margin-right:5px;">
+          <option [ngValue]="null">-- Elegir Asignatura --</option>
+          <option *ngFor="let asig of listaAsignaturas" [ngValue]="asig.id">
+            {{ asig.clase }}
+          </option>
+        </select>
+        <button (click)="matricular()" class="btn-guardar" [disabled]="!asignaturaParaMatricular">
+          ➕ Añadir
+        </button>
+      </div>
+      <hr>
+      <ul class="lista-asignaturas">
+        <li *ngFor="let m of matriculasAlumno">
+          {{ m.asignatura }}
+          <button (click)="eliminarMatricula(m.id)" style="background:none; border:none; cursor:pointer;">❌</button>
+        </li>
+      </ul>
+      <button (click)="cerrarMatriculas()" class="btn-cerrar-modal"
+        style="width:100%; margin-top:10px; padding:10px;">Cerrar</button>
     </div>
-
-    <hr>
-
-    <h4>Asignaturas actuales:</h4>
-    <ul class="lista-asignaturas">
-      <li *ngFor="let m of matriculasAlumno">
-        {{ m.asignatura }}
-        <button (click)="eliminarMatricula(m.id)" class="btn-borrar-peque">🗑️</button>
-      </li>
-      <li *ngIf="matriculasAlumno.length === 0" style="color:#999; font-style: italic;">
-        No está matriculado en nada aún.
-      </li>
-    </ul>
-
-    <button (click)="cerrarMatriculas()" class="btn-cerrar-modal">Cerrar</button>
   </div>
-</div>

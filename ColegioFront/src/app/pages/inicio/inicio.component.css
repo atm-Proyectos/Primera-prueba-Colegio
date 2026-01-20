@@ -1,17 +1,12 @@
-/* Panel superior */
-.dashboard-panel {
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    margin-bottom: 25px;
+/* Buscador Grande */
+.buscador-wrap {
+    margin-top: 15px;
 }
 
-/* Buscador Grande */
 .input-grande {
     width: 100%;
     padding: 15px;
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     border: 2px solid #ecf0f1;
     border-radius: 8px;
     outline: none;
@@ -20,10 +15,10 @@
 
 .input-grande:focus {
     border-color: #3498db;
-    box-shadow: 0 0 8px rgba(52, 152, 219, 0.2);
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.2);
 }
 
-/* Etiquetas de Estado */
+/* Etiquetas de Estado (Aprobado/Suspenso) */
 .badge-aprobado {
     background-color: #d4edda;
     color: #155724;

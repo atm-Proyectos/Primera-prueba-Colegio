@@ -9,9 +9,12 @@ import { InicioComponent } from './pages/inicio/inicio.component';
 import { AlumnosComponent } from './pages/alumnos/alumnos.component';
 import { AsignaturasComponent } from './pages/asignaturas/asignaturas.component';
 import { NotasComponent } from './pages/notas/notas.component';
+import { NavbarComponent } from './components/navbar/navbar.component';
+import { FooterComponent } from './components/footer/footer.component';
+import { SpinnerComponent } from './components/spinner/spinner.component';
 
 @NgModule({
-  declarations: [AppComponent, InicioComponent, AlumnosComponent, AsignaturasComponent, NotasComponent],
+  declarations: [AppComponent, InicioComponent, AlumnosComponent, AsignaturasComponent, NotasComponent, NavbarComponent, FooterComponent, SpinnerComponent],
   imports: [
     BrowserModule,
     AppRoutingModule,

@@ -23,6 +23,14 @@ namespace ColegioAPI.Controllers
             return await _context.Alumnos.OrderBy(a => a.Apellido).ToListAsync();
         }
 
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Alumnos>> GetAlumno(int id)
+        {
+            var alumno = await _context.Alumnos.FindAsync(id);
+            if (alumno == null) return NotFound();
+            return alumno;
+        }
+
         // 2. CREAR
         [HttpPost]
         public async Task<ActionResult<Alumnos>> PostAlumno(Alumnos alumno)
