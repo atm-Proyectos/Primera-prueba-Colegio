@@ -1,5 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ApiService } from 'src/app/services/api.service';
+import { Asignaturas } from 'src/app/models/asignaturas.model';
+import { Store } from '@ngrx/store';
+import { cargarAsignaturas } from 'src/app/state/Asignaturas/asignaturas.actions';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-asignaturas',
@@ -7,28 +11,26 @@ import { ApiService } from 'src/app/services/api.service';
   styleUrls: ['./asignaturas.component.css']
 })
 export class AsignaturasComponent implements OnInit {
-  listaAsignaturas: any[] = [];
+
+  asignaturas$: Observable<Asignaturas[]>;
+  cargando$: Observable<boolean>;
+  error$: Observable<any>;
 
   formAsignatura = { id: 0, clase: "", profesor: "" };
 
   mensajeError: string = "";
-  cargando: boolean = true;
 
-  constructor(private api: ApiService) { }
+  constructor(
+    private api: ApiService,
+    private store: Store<{ asignaturas: any }>) {
 
-  ngOnInit(): void {
-    this.cargarAsignaturas();
+    this.asignaturas$ = this.store.select(state => state.asignaturas.asignaturas);
+    this.cargando$ = this.store.select(state => state.asignaturas.loading);
+    this.error$ = this.store.select(state => state.asignaturas.error);
   }
 
-  cargarAsignaturas() {
-    this.cargando = true;
-    this.api.getAsignaturas().subscribe({
-      next: (data) => {
-        this.listaAsignaturas = data;
-        this.cargando = false;
-      },
-      error: (err) => { console.error(err); this.cargando = false; }
-    });
+  ngOnInit(): void {
+    this.store.dispatch(cargarAsignaturas());
   }
 
   guardar() {
@@ -38,7 +40,10 @@ export class AsignaturasComponent implements OnInit {
       : this.api.editarAsignatura(this.formAsignatura.id, this.formAsignatura);
 
     peticion.subscribe({
-      next: () => { this.cargarAsignaturas(); this.limpiar(); },
+      next: () => {
+        this.store.dispatch(cargarAsignaturas());
+        this.limpiar();
+      },
       error: (err) => {
         this.mensajeError = this.traducirError(err);
         setTimeout(() => this.mensajeError = "", 5000);
@@ -53,7 +58,7 @@ export class AsignaturasComponent implements OnInit {
   eliminar(id: number) {
     if (confirm("¿Borrar asignatura? Cuidado si tiene alumnos...")) {
       this.api.eliminarAsignatura(id).subscribe({
-        next: () => this.cargarAsignaturas(),
+        next: () => this.store.dispatch(cargarAsignaturas()),
         error: (err) => {
           this.mensajeError = this.traducirError(err);
           setTimeout(() => this.mensajeError = "", 5000);

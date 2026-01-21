@@ -1,24 +1,44 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { FormsModule } from '@angular/forms';
-import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-
 import { AlumnosComponent } from './alumnos.component';
+import { provideMockStore } from '@ngrx/store/testing';
+import { FormsModule } from '@angular/forms';
 import { ApiService } from 'src/app/services/api.service';
+import { of } from 'rxjs';
 
 describe('AlumnosComponent', () => {
   let component: AlumnosComponent;
   let fixture: ComponentFixture<AlumnosComponent>;
 
+  const mockApiService = jasmine.createSpyObj('ApiService', [
+    'getMatriculas',
+    'getAsignaturas',
+    'guardarAlumno',
+    'editarAlumno',
+    'eliminarAlumno',
+    'matricular',
+    'desmatricular'
+  ]);
+
+  mockApiService.getMatriculas.and.returnValue(of([]));
+  mockApiService.getAsignaturas.and.returnValue(of([]));
+  mockApiService.guardarAlumno.and.returnValue(of({}));
+  mockApiService.editarAlumno.and.returnValue(of({}));
+  mockApiService.eliminarAlumno.and.returnValue(of({}));
+  mockApiService.matricular.and.returnValue(of({}));
+  mockApiService.desmatricular.and.returnValue(of({}));
+
+  const initialState = {
+    alumnos: { loading: false, alumnos: [], error: null }
+  };
+
   beforeEach(() => {
     TestBed.configureTestingModule({
       declarations: [AlumnosComponent],
-      imports: [
-        HttpClientTestingModule,
-        FormsModule
-      ],
-      providers: [ApiService],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA]
+      imports: [FormsModule],
+      providers: [
+        provideMockStore({ initialState }),
+        { provide: ApiService, useValue: mockApiService }
+      ]
     });
     fixture = TestBed.createComponent(AlumnosComponent);
     component = fixture.componentInstance;

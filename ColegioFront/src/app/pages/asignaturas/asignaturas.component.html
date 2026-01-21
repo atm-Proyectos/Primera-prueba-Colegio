@@ -35,7 +35,7 @@
             </div>
 
             <div style="display: flex; gap: 5px;">
-                <button type="submit" class="btn-guardar" [disabled]="formAsig.invalid || cargando"
+                <button type="submit" class="btn-guardar" [disabled]="formAsig.invalid || (cargando$ | async)"
                     [title]="formAsig.invalid ? 'Corrige los campos en rojo' : 'Guardar'">
                     {{ formAsignatura.id === 0 ? '💾 Crear' : '🔄 Actualizar' }}
                 </button>
@@ -46,12 +46,12 @@
         </div>
     </form>
 
-    <div *ngIf="cargando" class="loading-container">
+    <div *ngIf="(cargando$ | async)" class="loading-container">
         <div class="spinner"></div>
         <p>Cargando asignaturas...</p>
     </div>
 
-    <table class="tabla-datos" *ngIf="!cargando">
+    <table class="tabla-datos" *ngIf="!(cargando$ | async)">
         <thead>
             <tr>
                 <th>Asignatura</th>
@@ -60,7 +60,7 @@
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let asig of listaAsignaturas">
+            <tr *ngFor="let asig of asignaturas$ | async">
                 <td>{{ asig.clase }}</td>
                 <td>{{ asig.profesor || '---' }}</td>
                 <td>

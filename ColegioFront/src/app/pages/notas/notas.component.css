@@ -1,1 +1,20 @@
-/* Todos los estilos de este componente, ahora se cargan desde src/styles.css globalmente. */
+/* Estilos específicos para validación */
+.input-error {
+    border: 2px solid #e74c3c !important;
+    /* Rojo intenso */
+    background-color: #fce4ec;
+}
+
+.msg-error {
+    display: block;
+    color: #c0392b;
+    font-size: 0.8rem;
+    margin-top: 4px;
+    font-weight: bold;
+}
+
+/* Ajuste para que los inputs se alineen bien con los mensajes de error */
+.filtros-dashboard>div {
+    display: flex;
+    flex-direction: column;
+}

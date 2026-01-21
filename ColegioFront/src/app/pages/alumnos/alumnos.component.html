@@ -43,7 +43,7 @@
       </div>
 
       <div style="display: flex; gap: 5px;">
-        <button type="submit" class="btn-guardar" [disabled]="formAlu.invalid || cargando"
+        <button type="submit" class="btn-guardar" [disabled]="formAlu.invalid || (cargando$ | async)"
           [title]="formAlu.invalid ? 'Rellena todos los campos correctamente' : 'Guardar'">
           {{ formAlumno.id === 0 ? '💾 Crear' : '🔄 Actualizar' }}
         </button>
@@ -56,9 +56,9 @@
     </div>
   </form>
 
-  <app-spinner *ngIf="cargando" texto="Cargando alumnos..."></app-spinner>
+  <app-spinner *ngIf="cargando$ | async" texto="Cargando alumnos..."></app-spinner>
 
-  <table class="tabla-datos" *ngIf="!cargando">
+  <table class="tabla-datos" *ngIf="!(cargando$ | async)">
     <thead>
       <tr>
         <th>Nombre</th>
@@ -68,7 +68,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let alumno of listaAlumnos">
+      <tr *ngFor="let alumno of alumnos$ | async">
         <td>{{ alumno.nombre }}</td>
         <td>{{ alumno.apellido }}</td>
         <td>{{ alumno.edad }} años</td>

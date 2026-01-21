@@ -1,5 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ApiService } from 'src/app/services/api.service';
+import { Store } from '@ngrx/store';
+import { Notas } from 'src/app/models/notas.models';
+import { cargarNotas } from 'src/app/state/Notas/notas.actions';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-notas',
@@ -7,6 +11,10 @@ import { ApiService } from 'src/app/services/api.service';
   styleUrls: ['./notas.component.css']
 })
 export class NotasComponent implements OnInit {
+  notas$: Observable<Notas[]>;
+  cargando$: Observable<boolean>;
+  error$: Observable<any>;
+
   listaNotas: any[] = [];
   listaAlumnos: any[] = [];
   listaMatriculas: any[] = [];
@@ -15,22 +23,33 @@ export class NotasComponent implements OnInit {
 
   mensajeError: string = "";
   cargando: boolean = true;
+  mostrarAvisoSimbolos: boolean = false;
 
   formSeleccion: any = { alumnoId: null, asignaturaId: null };
-
-  // Dato real para la nota
   valorNota: number | null = null;
   notaIdEditar: number = 0;
 
-  constructor(private api: ApiService) { }
+  constructor(
+    private api: ApiService,
+    private store: Store<{ notas: any }>) {
+    this.notas$ = this.store.select(state => state.notas.notas);
+    this.cargando$ = this.store.select(state => state.notas.cargando);
+    this.error$ = this.store.select(state => state.notas.error);
+  }
 
   ngOnInit(): void {
-    this.cargarDatosIniciales();
+    this.store.dispatch(cargarNotas());
+    this.cargarDatosAuxiliares();
+  }
+
+  cargarDatosAuxiliares() {
+    this.api.getNotas().subscribe(notas => this.listaNotas = notas);
+    this.api.getAlumnos().subscribe(alumnos => this.listaAlumnos = alumnos);
+    this.api.getMatriculas().subscribe(matriculas => this.listaMatriculas = matriculas);
   }
 
   cargarDatosIniciales() {
     this.cargando = true;
-    // Cargamos Notas, Alumnos y Matrículas a la vez
     this.api.getNotas().subscribe(notas => {
       this.listaNotas = notas;
       this.api.getAlumnos().subscribe(alumnos => {
@@ -50,9 +69,9 @@ export class NotasComponent implements OnInit {
     if (this.formSeleccion.alumnoId) {
       const matriculas = this.listaMatriculas.filter(m => m.alumnoId == this.formSeleccion.alumnoId);
 
-      // Mapeamos para sacar solo Nombre asignatura y el ID de la asignatura original
       this.listaAsignaturasDelAlumno = matriculas.map(m => ({
         idAsignaturaReal: m.asignaturaId,
+        idMatricula: m.id,
         nombreAsignatura: m.asignatura
       }));
 
@@ -84,17 +103,21 @@ export class NotasComponent implements OnInit {
     };
 
     // 3. Enviar
-    if (this.notaIdEditar === 0) {
-      this.api.guardarNota(notaParaEnviar).subscribe({
-        next: () => { this.cargarDatosIniciales(); this.limpiar(); },
-        error: (err) => { console.error(err); this.mensajeError = "🛑 Error al guardar."; }
-      });
-    } else {
-      this.api.editarNota(this.notaIdEditar, notaParaEnviar).subscribe({
-        next: () => { this.cargarDatosIniciales(); this.limpiar(); },
-        error: (err) => { console.error(err); this.mensajeError = "🛑 Error al editar."; }
-      });
-    }
+    const peticion = this.notaIdEditar === 0
+      ? this.api.guardarNota(notaParaEnviar)
+      : this.api.editarNota(this.notaIdEditar, notaParaEnviar);
+
+    peticion.subscribe({
+      next: () => {
+        // ÉXITO: Recargamos tabla (Redux) y limpiamos
+        this.store.dispatch(cargarNotas());
+        this.limpiar();
+      },
+      error: (err) => {
+        console.error(err);
+        this.mensajeError = "🛑 Error al guardar.";
+      }
+    });
   }
 
   editar(nota: any) {
@@ -103,7 +126,8 @@ export class NotasComponent implements OnInit {
     this.formSeleccion.alumnoId = nota.alumnoId;
     this.alCambiarAlumno();
 
-    // Pequeño retardo
+    alert("⚠️ Modo Edición: Por seguridad, selecciona de nuevo el Alumno y Asignatura.");
+
     setTimeout(() => {
       this.formSeleccion.asignaturaId = nota.asignaturaId;
     }, 100);
@@ -118,8 +142,21 @@ export class NotasComponent implements OnInit {
   }
 
   eliminar(id: number) {
-    if (confirm("¿Borrar nota?")) {
-      this.api.eliminarNota(id).subscribe(() => this.cargarDatosIniciales());
+    if (confirm("¿Borrar esta nota?")) {
+      this.api.eliminarNota(id).subscribe({
+        next: () => this.store.dispatch(cargarNotas()),
+        error: (err) => alert("Error al borrar")
+      });
+    }
+  }
+
+  evitarSimbolos(event: any) {
+    if (['-', '+', 'e', 'E'].includes(event.key)) {
+      event.preventDefault();
+      this.mostrarAvisoSimbolos = true;
+      setTimeout(() => {
+        this.mostrarAvisoSimbolos = false;
+      }, 2000);
     }
   }
 

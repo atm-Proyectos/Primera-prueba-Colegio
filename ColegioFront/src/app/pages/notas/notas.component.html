@@ -10,37 +10,63 @@
 
       <div style="flex: 1;">
         <select [(ngModel)]="formSeleccion.alumnoId" name="alumnoId" required style="width: 100%;"
-          (change)="alCambiarAlumno()">
-          <option [ngValue]="null">-- 1. Selecciona Alumno --</option>
+          (change)="alCambiarAlumno()" #alumnoRef="ngModel"
+          [class.input-error]="alumnoRef.invalid && (alumnoRef.dirty || alumnoRef.touched)">
+
+          <option [ngValue]="null">-- Selecciona Alumno --</option>
           <option *ngFor="let alu of listaAlumnos" [ngValue]="alu.id">
             {{ alu.nombre }} {{ alu.apellido }}
           </option>
         </select>
+
+        <small *ngIf="alumnoRef.invalid && (alumnoRef.dirty || alumnoRef.touched)" class="msg-error">
+          <div *ngIf="alumnoRef.errors?.['required']">Debes elegir un alumno.</div>
+        </small>
       </div>
 
       <div style="flex: 1;">
         <select [(ngModel)]="formSeleccion.asignaturaId" name="asignaturaId" required style="width: 100%;"
-          [disabled]="!formSeleccion.alumnoId">
-          <option [ngValue]="null">-- 2. Selecciona Asignatura --</option>
+          [disabled]="!formSeleccion.alumnoId" #asigRef="ngModel"
+          [class.input-error]="asigRef.invalid && (asigRef.dirty || asigRef.touched)">
+
+          <option [ngValue]="null">-- Selecciona Asignatura --</option>
           <option *ngFor="let asig of listaAsignaturasDelAlumno" [ngValue]="asig.idAsignaturaReal">
             {{ asig.nombreAsignatura }}
           </option>
         </select>
-      </div>
 
-      <div style="width: 120px;">
-        <input type="number" [(ngModel)]="valorNota" name="valorNota" placeholder="Nota (0-10)" required min="0"
-          max="10" #notaInput="ngModel"
-          [class.input-error]="notaInput.invalid && (notaInput.dirty || notaInput.touched)" style="width: 100%;">
-
-        <small *ngIf="notaInput.invalid && notaInput.touched" class="msg-error">
-          <span *ngIf="notaInput.errors?.['min']">Mínimo 0</span>
-          <span *ngIf="notaInput.errors?.['max']">¡Máximo 10!</span>
+        <small *ngIf="asigRef.invalid && (asigRef.dirty || asigRef.touched)" class="msg-error">
+          <div *ngIf="asigRef.errors?.['required']">Debes elegir una asignatura.</div>
         </small>
       </div>
 
+      <div style="width: 140px; position: relative; margin-right: 10px;">
+
+        <input type="number" [(ngModel)]="valorNota" name="valorNota" placeholder="0 - 10" required min="0" max="10"
+          step="0.01" (keydown)="evitarSimbolos($event)" #notaRef="ngModel"
+          [class.input-error]="notaRef.invalid && (notaRef.dirty || notaRef.touched)" style="width: 100%;">
+
+        <div style="position: absolute; top: 100%; left: 0; width: 140px; z-index: 10;">
+
+          <small *ngIf="mostrarAvisoSimbolos"
+            style="color: #d35400; background: #fae5d3; padding: 2px 5px; display: block; border: 1px solid #d35400; border-radius: 4px;">
+            ⚠️ Solo números (0-10)
+          </small>
+
+          <small *ngIf="notaRef.invalid && (notaRef.dirty || notaRef.touched) && !mostrarAvisoSimbolos"
+            class="msg-error" style="background: white; display: block;">
+
+            <div *ngIf="notaRef.errors?.['required']">⚠️ Obligatorio.</div>
+            <div *ngIf="notaRef.errors?.['min']">⛔ Mínimo 0.</div>
+            <div *ngIf="notaRef.errors?.['max']">⛔ Máximo 10.</div>
+          </small>
+
+        </div>
+      </div>
+
       <div>
-        <button type="submit" class="btn-guardar" [disabled]="formNotas.invalid || !formSeleccion.asignaturaId">
+        <button type="submit" class="btn-guardar" [disabled]="formNotas.invalid || (cargando$ | async)"
+          [title]="formNotas.invalid ? 'Rellena todos los campos correctamente' : 'Guardar'">
           {{ notaIdEditar === 0 ? '💾 Guardar' : '🔄 Actualizar' }}
         </button>
 
@@ -50,9 +76,12 @@
   </form>
 </div>
 
-<app-spinner *ngIf="cargando" texto="Cargando boletín..."></app-spinner>
+<div *ngIf="(cargando$ | async)" class="loading-container">
+  <app-spinner></app-spinner>
+  <p>Procesando notas...</p>
+</div>
 
-<table class="tabla-datos" *ngIf="!cargando">
+<table class="tabla-datos" *ngIf="!(cargando$ | async)">
   <thead>
     <tr>
       <th>Alumno</th>
@@ -62,13 +91,12 @@
     </tr>
   </thead>
   <tbody>
-    <tr *ngFor="let nota of listaNotas">
+    <tr *ngFor="let nota of notas$ | async">
       <td>{{ nota.nombreAlumno }}</td>
       <td>{{ nota.nombreAsignatura }}</td>
-      <td [style.color]="nota.valor >= 5 ? 'green' : 'red'" style="font-weight: bold; font-size: 1.1em;">
+      <td [style.color]="nota.valor >= 5 ? 'green' : 'red'" style="font-weight: bold;">
         {{ nota.valor }}
       </td>
-
       <td>
         <button (click)="editar(nota)" class="btn-editar">✏️</button>
         <button (click)="eliminar(nota.id)" class="btn-borrar">🗑️</button>

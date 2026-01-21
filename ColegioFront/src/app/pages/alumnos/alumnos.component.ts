@@ -1,4 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { Observable } from 'rxjs';
+import { Alumnos } from 'src/app/models/alumnos.model';
+import { cargarAlumnos } from 'src/app/state/Alumnos/alumnos.actions';
 import { ApiService } from 'src/app/services/api.service';
 
 @Component({
@@ -7,38 +11,47 @@ import { ApiService } from 'src/app/services/api.service';
   styleUrls: ['./alumnos.component.css']
 })
 export class AlumnosComponent implements OnInit {
-  listaAlumnos: any[] = [];
-  formAlumno: any = { id: 0, nombre: "", apellido: "", edad: null };
-  mensajeError: string = "";
-  cargando: boolean = true;
 
-  // Variables para gestión de matrículas
+  alumnos$: Observable<Alumnos[]>;
+  cargando$: Observable<boolean>;
+  error$: Observable<any>;
+
+  mensajeError: string = "";
+
+  formAlumno: Alumnos = {
+    id: 0,
+    nombre: "",
+    apellido: "",
+    edad: 0
+  };
+
   modoMatricula: boolean = false;
   alumnoSeleccionado: any = null;
+  listaAsignaturas: any[] = [];
   listaMatriculas: any[] = [];
   matriculasAlumno: any[] = [];
-  listaAsignaturas: any[] = [];
   asignaturaParaMatricular: any = null;
 
-  constructor(private api: ApiService) { }
-
-  ngOnInit(): void {
-    this.cargarAlumnos();
-    this.api.getAsignaturas().subscribe(data => this.listaAsignaturas = data);
-    this.cargarMatriculas();
+  constructor(
+    private store: Store<{ alumnos: any }>,
+    private api: ApiService
+  ) {
+    this.alumnos$ = this.store.select(state => state.alumnos.alumnos);
+    this.cargando$ = this.store.select(state => state.alumnos.loading);
+    this.error$ = this.store.select(state => state.alumnos.error);
   }
 
-  cargarMatriculas() {
+  ngOnInit(): void {
+    this.store.dispatch(cargarAlumnos());
+    this.cargarDatosAuxiliares();
+  }
+
+  cargarDatosAuxiliares() {
+    this.api.getAsignaturas().subscribe(data => this.listaAsignaturas = data);
     this.api.getMatriculas().subscribe(data => this.listaMatriculas = data);
   }
 
-  cargarAlumnos() {
-    this.cargando = true;
-    this.api.getAlumnos().subscribe({
-      next: (data) => { this.listaAlumnos = data; this.cargando = false; },
-      error: (err) => { console.error(err); this.cargando = false; }
-    });
-  }
+  // --- MÉTODOS DE ACCIÓN ---
 
   guardar() {
     this.mensajeError = "";
@@ -49,60 +62,39 @@ export class AlumnosComponent implements OnInit {
 
     peticion.subscribe({
       next: () => {
-        this.cargarAlumnos();
+        this.store.dispatch(cargarAlumnos());
         this.limpiar();
-        this.mensajeError = "";
       },
-      error: (err) => {
-        console.error(err);
-        this.mensajeError = "🛑 " + (err.error?.title || err.error || err.message || "Error desconocido al guardar.");
-        setTimeout(() => this.mensajeError = "", 5000);
-      }
+      error: (err) => this.manejarError(err)
     });
   }
 
-  manejarError(err: any) {
-    console.log("Error recibido:", err);
-
-    if (typeof err.error === 'string') {
-      this.mensajeError = "🛑 " + err.error;
+  eliminar(id: number) {
+    if (confirm("¿Seguro que quieres borrar este alumno?")) {
+      this.api.eliminarAlumno(id).subscribe({
+        next: () => this.store.dispatch(cargarAlumnos()),
+        error: (err) => this.manejarError(err)
+      });
     }
-    else if (err.error?.errors) {
-      const primeraClave = Object.keys(err.error.errors)[0];
-      this.mensajeError = "⚠️ " + err.error.errors[primeraClave][0];
-    }
-    else {
-      this.mensajeError = "🛑 Error de conexión o servidor.";
-    }
-
-    setTimeout(() => this.mensajeError = "", 5000);
   }
 
   editar(alumno: any) {
     this.formAlumno = { ...alumno };
   }
 
-  eliminar(id: number) {
-    if (confirm("¿Seguro que quieres borrar este alumno?")) {
-      this.api.eliminarAlumno(id).subscribe({
-        next: () => {
-          this.cargarAlumnos();
-          this.mensajeError = "";
-        },
-        error: (err) => {
-          console.error(err);
-          this.mensajeError = this.traducirError(err);
-          setTimeout(() => this.mensajeError = "", 5000);
-        }
-      });
-    }
-  }
-
   limpiar() {
-    this.formAlumno = { id: 0, nombre: "", apellido: "", edad: null };
+    this.formAlumno = { id: 0, nombre: "", apellido: "", edad: 0 };
+    this.mensajeError = "";
   }
 
-  // --- LÓGICA DEL POPUP DE MATRÍCULA ---
+  manejarError(err: any) {
+    console.error(err);
+    this.mensajeError = "🛑 Ocurrió un error (Revisa consola)";
+    if (err.error && typeof err.error === 'string') this.mensajeError = "🛑 " + err.error;
+    setTimeout(() => this.mensajeError = "", 5000);
+  }
+
+  // --- LÓGICA DEL MODAL DE MATRÍCULAS ---
 
   abrirMatriculas(alumno: any) {
     this.alumnoSeleccionado = alumno;
@@ -121,13 +113,14 @@ export class AlumnosComponent implements OnInit {
 
     this.api.matricular(this.alumnoSeleccionado.id, this.asignaturaParaMatricular).subscribe({
       next: () => {
+        // Refrescamos matrículas
         this.api.getMatriculas().subscribe(data => {
           this.listaMatriculas = data;
           this.filtrarMatriculas();
         });
         this.asignaturaParaMatricular = null;
       },
-      error: (err) => alert("🛑 " + (err.error || "Error al matricular"))
+      error: (err) => alert("🛑 Error al matricular")
     });
   }
 
@@ -145,28 +138,5 @@ export class AlumnosComponent implements OnInit {
   cerrarMatriculas() {
     this.modoMatricula = false;
     this.alumnoSeleccionado = null;
-  }
-
-
-  private traducirError(err: any): string {
-    let mensaje = err.error?.title || err.error || err.message || "Error desconocido";
-
-    if (mensaje.includes("Foreign key") || mensaje.includes("constraint")) {
-      return "🛑 No se puede borrar: El alumno tiene notas o matrículas asociadas.";
-    }
-    if (mensaje.includes("connection refused") || err.status === 0) {
-      return "🛑 Error de conexión: El servidor parece apagado.";
-    }
-    if (err.status === 400) {
-      return "🛑 Datos incorrectos. Revisa los campos.";
-    }
-    if (err.status === 404) {
-      return "🛑 El recurso no existe (quizás ya fue borrado).";
-    }
-    if (err.status === 500) {
-      return "🛑 Error interno del servidor. Inténtalo luego.";
-    }
-
-    return "🛑 " + mensaje;
   }
 }
