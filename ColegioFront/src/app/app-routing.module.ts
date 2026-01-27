@@ -4,9 +4,11 @@ import { InicioComponent } from './pages/inicio/inicio.component';
 import { AlumnosComponent } from './pages/alumnos/alumnos.component';
 import { AsignaturasComponent } from './pages/asignaturas/asignaturas.component';
 import { NotasComponent } from './pages/notas/notas.component';
+import { DashboardComponent } from './pages/dashboard/dashboard.component';
 
 const routes: Routes = [
-  { path: '', redirectTo: 'inicio', pathMatch: 'full' }, // Si no hay nada, ve a inicio
+  { path: '', redirectTo: 'inicio', pathMatch: 'full' },
+  { path: 'dashboard', component: DashboardComponent },
   { path: 'inicio', component: InicioComponent },
   { path: 'alumnos', component: AlumnosComponent },
   { path: 'asignaturas', component: AsignaturasComponent },

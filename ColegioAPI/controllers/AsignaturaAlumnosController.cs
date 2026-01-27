@@ -53,8 +53,8 @@ namespace ColegioAPI.Controllers
             {
                 AlumnoId = alumnoId,
                 AsignaturaId = asignaturaId,
-                AñoEscolar = 2026,              // Lo ponemos fijo o lo calculamos
-                FechaMatricula = DateTime.UtcNow // Fecha de hoy
+                AñoEscolar = 2026,
+                FechaMatricula = DateTime.UtcNow
             };
 
             _context.Asignatura_Alumnos.Add(nuevaMatricula);

@@ -2,6 +2,16 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+export interface DashboardStats {
+  totalAlumnos: number;
+  totalAsignaturas: number;
+  edadMediaGlobal: number;
+  alumnosPorAsignatura: { nombre: string, valor: number }[];
+  distribucionEdades: { nombre: string, valor: number }[];
+  notaMediaPorAsignatura: { nombre: string, valorDecimal: number }[];
+  aprobadosVsSuspensos: { nombre: string, valor: number }[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private url = 'http://localhost:5141/api';
@@ -46,5 +56,10 @@ export class ApiService {
   // Borrar matrícula
   desmatricular(id: number) {
     return this.http.delete(`${this.url}/AsignaturaAlumnos/${id}`);
+  }
+
+  // --- DASHBOARD ---
+  getStats(): Observable<DashboardStats> {
+    return this.http.get<DashboardStats>(`${this.url}/Stats`);
   }
 }
