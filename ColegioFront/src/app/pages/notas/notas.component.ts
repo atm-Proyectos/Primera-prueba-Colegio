@@ -4,6 +4,7 @@ import { Store } from '@ngrx/store';
 import { Notas } from 'src/app/models/notas.models';
 import { cargarNotas } from 'src/app/state/Notas/notas.actions';
 import { Observable } from 'rxjs';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-notas',
@@ -39,83 +40,62 @@ export class NotasComponent implements OnInit {
 
   ngOnInit(): void {
     this.store.dispatch(cargarNotas());
-    this.cargarDatosAuxiliares();
+    this.cargarAuxiliares();
   }
 
-  cargarDatosAuxiliares() {
-    this.api.getNotas().subscribe(notas => this.listaNotas = notas);
-    this.api.getAlumnos().subscribe(alumnos => this.listaAlumnos = alumnos);
-    this.api.getMatriculas().subscribe(matriculas => this.listaMatriculas = matriculas);
-  }
-
-  cargarDatosIniciales() {
-    this.cargando = true;
-    this.api.getNotas().subscribe(notas => {
-      this.listaNotas = notas;
-      this.api.getAlumnos().subscribe(alumnos => {
-        this.listaAlumnos = alumnos;
-        this.api.getMatriculas().subscribe(matriculas => {
-          this.listaMatriculas = matriculas;
-          this.cargando = false;
-        });
-      });
-    });
+  cargarAuxiliares() {
+    this.api.getAlumnos().subscribe(res => this.listaAlumnos = res);
+    this.api.getMatriculas().subscribe(res => this.listaMatriculas = res);
   }
 
   alCambiarAlumno() {
     this.formSeleccion.asignaturaId = null;
-    this.listaAsignaturasDelAlumno = [];
-
-    if (this.formSeleccion.alumnoId) {
-      const matriculas = this.listaMatriculas.filter(m => m.alumnoId == this.formSeleccion.alumnoId);
-
-      this.listaAsignaturasDelAlumno = matriculas.map(m => ({
-        idAsignaturaReal: m.asignaturaId,
-        idMatricula: m.id,
-        nombreAsignatura: m.asignatura
-      }));
-
-      if (this.listaAsignaturasDelAlumno.length === 0) {
-        alert("Este alumno no está matriculado en ninguna asignatura. Ve a 'Alumnos' y matricúlalo primero.");
-      }
+    const alumnoId = this.formSeleccion.alumnoId;
+    if (alumnoId) {
+      const matriculas = this.listaMatriculas.filter(m => m.alumnoId == alumnoId);
+      this.listaAsignaturasDelAlumno = matriculas.map(m => m.asignatura);
+    } else {
+      this.listaAsignaturasDelAlumno = [];
     }
   }
 
   guardar() {
-    this.mensajeError = "";
-
-    // 1. BUSCAR EL ID DE LA MATRÍCULA
-    const matriculaEncontrada = this.listaMatriculas.find(m =>
-      m.alumnoId == this.formSeleccion.alumnoId &&
-      m.asignaturaId == this.formSeleccion.asignaturaId
-    );
-
-    if (!matriculaEncontrada) {
-      this.mensajeError = "🛑 Error: No se encuentra la matrícula. Asegúrate de que el alumno está matriculado.";
+    // Validaciones con SweetAlert
+    if (!this.valorNota || !this.formSeleccion.alumnoId || !this.formSeleccion.asignaturaId) {
+      Swal.fire('Faltan datos', 'Selecciona alumno, asignatura y escribe una nota.', 'warning');
       return;
     }
 
-    // 2. Preparar el objeto para el Backend
-    const notaParaEnviar = {
+    if (this.valorNota < 0 || this.valorNota > 10) {
+      Swal.fire('Nota inválida', 'La nota debe estar entre 0 y 10.', 'error');
+      return;
+    }
+
+    const objetoNota = {
       id: this.notaIdEditar,
       valor: this.valorNota,
-      asignaturaAlumnoId: matriculaEncontrada.id
+      alumnoId: this.formSeleccion.alumnoId,
+      asignaturaId: this.formSeleccion.asignaturaId
     };
 
-    // 3. Enviar
-    const peticion = this.notaIdEditar === 0
-      ? this.api.guardarNota(notaParaEnviar)
-      : this.api.editarNota(this.notaIdEditar, notaParaEnviar);
+    const request = this.notaIdEditar === 0
+      ? this.api.guardarNota(objetoNota)
+      : this.api.editarNota(this.notaIdEditar, objetoNota);
 
-    peticion.subscribe({
+    request.subscribe({
       next: () => {
-        // ÉXITO: Recargamos tabla (Redux) y limpiamos
+        Swal.fire({
+          icon: 'success',
+          title: '¡Nota Guardada!',
+          showConfirmButton: false,
+          timer: 1500
+        });
         this.store.dispatch(cargarNotas());
         this.limpiar();
       },
       error: (err) => {
         console.error(err);
-        this.mensajeError = "🛑 Error al guardar.";
+        Swal.fire('Error', 'No se pudo guardar la nota.', 'error');
       }
     });
   }
@@ -124,10 +104,20 @@ export class NotasComponent implements OnInit {
     this.notaIdEditar = nota.id;
     this.valorNota = nota.valor;
     this.formSeleccion.alumnoId = nota.alumnoId;
+
+    // Cargamos las asignaturas posibles de este alumno
     this.alCambiarAlumno();
 
-    alert("⚠️ Modo Edición: Por seguridad, selecciona de nuevo el Alumno y Asignatura.");
+    // Aviso informativo suave en vez de alert()
+    Swal.fire({
+      icon: 'info',
+      title: 'Modo Edición',
+      text: 'Confirma la asignatura antes de guardar.',
+      timer: 2500,
+      showConfirmButton: false
+    });
 
+    // Pequeño retardo para que el select se actualice
     setTimeout(() => {
       this.formSeleccion.asignaturaId = nota.asignaturaId;
     }, 100);
@@ -142,28 +132,32 @@ export class NotasComponent implements OnInit {
   }
 
   eliminar(id: number) {
-    if (confirm("¿Borrar esta nota?")) {
-      this.api.eliminarNota(id).subscribe({
-        next: () => this.store.dispatch(cargarNotas()),
-        error: (err) => alert("Error al borrar")
-      });
-    }
+    Swal.fire({
+      title: '¿Borrar nota?',
+      text: "Esta acción no se puede deshacer.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      confirmButtonText: 'Sí, borrar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.api.eliminarNota(id).subscribe({
+          next: () => {
+            Swal.fire('Borrada', 'Nota eliminada.', 'success');
+            this.store.dispatch(cargarNotas());
+          },
+          error: (err) => Swal.fire('Error', 'No se pudo borrar la nota.', 'error')
+        });
+      }
+    });
   }
 
   evitarSimbolos(event: any) {
     if (['-', '+', 'e', 'E'].includes(event.key)) {
       event.preventDefault();
       this.mostrarAvisoSimbolos = true;
-      setTimeout(() => {
-        this.mostrarAvisoSimbolos = false;
-      }, 2000);
-    }
-  }
-
-  validarRango() {
-    if (this.valorNota !== null) {
-      if (this.valorNota < 0) this.valorNota = 0;
-      if (this.valorNota > 10) this.valorNota = 10;
+      setTimeout(() => this.mostrarAvisoSimbolos = false, 2000);
     }
   }
 }

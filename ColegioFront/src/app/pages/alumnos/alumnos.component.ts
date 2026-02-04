@@ -2,8 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { Alumnos } from 'src/app/models/alumnos.model';
-import { cargarAlumnos } from 'src/app/state/Alumnos/alumnos.actions';
 import { ApiService } from 'src/app/services/api.service';
+import Swal from 'sweetalert2';
+
+import { cargarAlumnos } from 'src/app/state/Alumnos/alumnos.actions';
 
 @Component({
   selector: 'app-alumnos',
@@ -42,19 +44,23 @@ export class AlumnosComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.store.dispatch(cargarAlumnos());
-    this.cargarDatosAuxiliares();
-  }
+    // Llamamos a la carga inicial
+    this.cargarAlumnos();
 
-  cargarDatosAuxiliares() {
+    // Cargamos auxiliares
     this.api.getAsignaturas().subscribe(data => this.listaAsignaturas = data);
     this.api.getMatriculas().subscribe(data => this.listaMatriculas = data);
   }
 
-  // --- MÉTODOS DE ACCIÓN ---
+  cargarAlumnos() {
+    this.store.dispatch(cargarAlumnos());
+  }
 
   guardar() {
-    this.mensajeError = "";
+    if (!this.formAlumno.nombre || !this.formAlumno.apellido || this.formAlumno.edad <= 0) {
+      Swal.fire('Error', 'Rellena todos los campos correctamente', 'error');
+      return;
+    }
 
     const peticion = this.formAlumno.id === 0
       ? this.api.guardarAlumno(this.formAlumno)
@@ -62,24 +68,48 @@ export class AlumnosComponent implements OnInit {
 
     peticion.subscribe({
       next: () => {
+        Swal.fire({
+          icon: 'success',
+          title: this.formAlumno.id === 0 ? '¡Registrado!' : '¡Actualizado!',
+          text: 'Los datos se han guardado correctamente.',
+          timer: 2000,
+          showConfirmButton: false
+        });
+
+        // Recargamos los datos del Store para que se actualice la tabla
         this.store.dispatch(cargarAlumnos());
+
         this.limpiar();
       },
       error: (err) => this.manejarError(err)
     });
   }
 
-  eliminar(id: number) {
-    if (confirm("¿Seguro que quieres borrar este alumno?")) {
-      this.api.eliminarAlumno(id).subscribe({
-        next: () => this.store.dispatch(cargarAlumnos()),
-        error: (err) => this.manejarError(err)
-      });
-    }
-  }
-
   editar(alumno: any) {
     this.formAlumno = { ...alumno };
+  }
+
+  eliminar(id: number) {
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: "Se borrará el alumno y todas sus notas.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      confirmButtonText: 'Sí, borrar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.api.eliminarAlumno(id).subscribe({
+          next: () => {
+            Swal.fire('Borrado', 'El alumno ha sido eliminado.', 'success');
+            // Recargamos los datos del Store
+            this.store.dispatch(cargarAlumnos());
+          },
+          error: (err) => Swal.fire('Error', 'No se pudo eliminar el alumno', 'error')
+        });
+      }
+    });
   }
 
   limpiar() {
@@ -89,9 +119,9 @@ export class AlumnosComponent implements OnInit {
 
   manejarError(err: any) {
     console.error(err);
-    this.mensajeError = "🛑 Ocurrió un error (Revisa consola)";
-    if (err.error && typeof err.error === 'string') this.mensajeError = "🛑 " + err.error;
-    setTimeout(() => this.mensajeError = "", 5000);
+    let msg = "🛑 Ocurrió un error";
+    if (err.error && typeof err.error === 'string') msg = "🛑 " + err.error;
+    Swal.fire('Error', msg, 'error');
   }
 
   // --- LÓGICA DEL MODAL DE MATRÍCULAS ---
@@ -113,26 +143,46 @@ export class AlumnosComponent implements OnInit {
 
     this.api.matricular(this.alumnoSeleccionado.id, this.asignaturaParaMatricular).subscribe({
       next: () => {
-        // Refrescamos matrículas
+        const Toast = Swal.mixin({
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000
+        });
+        Toast.fire({ icon: 'success', title: 'Asignatura añadida' });
+
         this.api.getMatriculas().subscribe(data => {
           this.listaMatriculas = data;
           this.filtrarMatriculas();
         });
         this.asignaturaParaMatricular = null;
       },
-      error: (err) => alert("🛑 Error al matricular")
+      error: (err) => Swal.fire("Error", "No se pudo matricular (¿quizás ya lo está?)", "error")
     });
   }
 
   eliminarMatricula(id: number) {
-    if (confirm("¿Quitar asignatura al alumno?")) {
-      this.api.desmatricular(id).subscribe(() => {
-        this.api.getMatriculas().subscribe(data => {
-          this.listaMatriculas = data;
-          this.filtrarMatriculas();
+    Swal.fire({
+      title: '¿Quitar asignatura?',
+      text: "Se perderán las notas asociadas si las hay.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, quitar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.api.eliminarMatricula(id).subscribe({
+          next: () => {
+            Swal.fire('Eliminado', 'Matrícula anulada', 'success');
+            this.api.getMatriculas().subscribe(data => {
+              this.listaMatriculas = data;
+              this.filtrarMatriculas();
+            });
+          },
+          error: () => Swal.fire('Error', 'No se pudo eliminar', 'error')
         });
-      });
-    }
+      }
+    });
   }
 
   cerrarMatriculas() {

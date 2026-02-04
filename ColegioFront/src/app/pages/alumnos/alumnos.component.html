@@ -22,7 +22,7 @@
 
       <div style="flex: 1;">
         <input type="text" [(ngModel)]="formAlumno.apellido" name="apellido" required minlength="2" maxlength="100"
-          pattern="^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s\.-]+$" placeholder="Apellido" #apellido="ngModel"
+          pattern="^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s\.-]+$" placeholder="Apellidos" #apellido="ngModel"
           [class.input-error]="apellido.invalid && (apellido.dirty || apellido.touched)" style="width: 100%;">
 
         <small *ngIf="apellido.invalid && (apellido.dirty || apellido.touched)" class="msg-error">
@@ -33,18 +33,19 @@
       </div>
 
       <div style="width: 100px;">
-        <input type="number" [(ngModel)]="formAlumno.edad" name="edad" placeholder="Edad" required min="3" max="19"
+        <input type="number" [(ngModel)]="formAlumno.edad" name="edad" required min="3" max="99" placeholder="Edad"
           #edad="ngModel" [class.input-error]="edad.invalid && (edad.dirty || edad.touched)" style="width: 100%;">
 
         <small *ngIf="edad.invalid && (edad.dirty || edad.touched)" class="msg-error">
-          <div *ngIf="edad.errors?.['required']">Falta edad.</div>
-          <div *ngIf="edad.errors?.['min'] || edad.errors?.['max']">3-19 años.</div>
+          <div *ngIf="edad.errors?.['required']">Obligatorio.</div>
+          <div *ngIf="edad.errors?.['min']">Min 3.</div>
+          <div *ngIf="edad.errors?.['max']">Max 99.</div>
         </small>
       </div>
 
       <div style="display: flex; gap: 5px;">
         <button type="submit" class="btn-guardar" [disabled]="formAlu.invalid || (cargando$ | async)"
-          [title]="formAlu.invalid ? 'Rellena todos los campos correctamente' : 'Guardar'">
+          [title]="formAlu.invalid ? 'Rellena todos los campos' : 'Guardar'">
           {{ formAlumno.id === 0 ? '💾 Crear' : '🔄 Actualizar' }}
         </button>
 
@@ -56,7 +57,10 @@
     </div>
   </form>
 
-  <app-spinner *ngIf="cargando$ | async" texto="Cargando alumnos..."></app-spinner>
+  <div *ngIf="(cargando$ | async)" class="loading-container">
+    <div class="spinner"></div>
+    <p>Cargando alumnos...</p>
+  </div>
 
   <table class="tabla-datos" *ngIf="!(cargando$ | async)">
     <thead>
@@ -64,7 +68,7 @@
         <th>Nombre</th>
         <th>Apellido</th>
         <th>Edad</th>
-        <th style="width: 180px;">Acciones</th>
+        <th>Acciones</th>
       </tr>
     </thead>
     <tbody>
@@ -73,9 +77,14 @@
         <td>{{ alumno.apellido }}</td>
         <td>{{ alumno.edad }} años</td>
         <td>
-          <button (click)="editar(alumno)" class="btn-editar">✏️</button>
-          <button (click)="eliminar(alumno.id)" class="btn-borrar">🗑️</button>
-          <button (click)="abrirMatriculas(alumno)" class="btn-matricular">🎓</button>
+          <button (click)="editar(alumno)" class="btn-editar" title="Editar datos">✏️</button>
+          <button (click)="eliminar(alumno.id)" class="btn-borrar" title="Borrar alumno">🗑️</button>
+          <button (click)="abrirMatriculas(alumno)" class="btn-matricular" title="Gestionar asignaturas">🎓</button>
+        </td>
+      </tr>
+      <tr *ngIf="(alumnos$ | async)?.length === 0">
+        <td colspan="4" style="text-align:center; padding: 20px; color: #777;">
+          No hay alumnos registrados.
         </td>
       </tr>
     </tbody>
@@ -99,10 +108,16 @@
       <ul class="lista-asignaturas">
         <li *ngFor="let m of matriculasAlumno">
           {{ m.asignatura }}
-          <button (click)="eliminarMatricula(m.id)" style="background:none; border:none; cursor:pointer;">❌</button>
+          <button (click)="eliminarMatricula(m.id)" style="background:none; border:none; cursor:pointer;"
+            title="Desmatricular">
+            ❌
+          </button>
+        </li>
+        <li *ngIf="matriculasAlumno.length === 0" style="text-align:center; color:#999;">
+          Sin asignaturas asignadas.
         </li>
       </ul>
-      <button (click)="cerrarMatriculas()" class="btn-cerrar-modal"
-        style="width:100%; margin-top:10px; padding:10px;">Cerrar</button>
+      <button (click)="cerrarMatriculas()" class="btn-cerrar-modal">Cerrar</button>
     </div>
   </div>
+</div>

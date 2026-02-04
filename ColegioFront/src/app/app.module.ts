@@ -13,6 +13,8 @@ import { asignaturasReducer } from './state/Asignaturas/asignaturas.reducer';
 import { AsignaturasEffects } from './state/Asignaturas/asignaturas.effects';
 import { notasReducer } from './state/Notas/notas.reducer';
 import { NotasEffects } from './state/Notas/notas.effects';
+import { dashboardReducer } from './state/Dashboard/dashboard.reducer';
+import { DashboardEffects } from './state/Dashboard/dashboard.effects';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -39,12 +41,14 @@ import { DashboardComponent } from './pages/dashboard/dashboard.component';
     StoreModule.forRoot({
       alumnos: alumnosReducer,
       asignaturas: asignaturasReducer,
-      notas: notasReducer
+      notas: notasReducer,
+      dashboard: dashboardReducer
     }),
     EffectsModule.forRoot([
       AlumnosEffects,
       AsignaturasEffects,
-      NotasEffects
+      NotasEffects,
+      DashboardEffects
     ]),
     StoreDevtoolsModule.instrument({ maxAge: 25 })
   ],

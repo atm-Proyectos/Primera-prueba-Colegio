@@ -36,30 +36,25 @@ export class ApiService {
   editarNota(id: number, dato: any) { return this.http.put(`${this.url}/Notas/${id}`, dato); }
   eliminarNota(id: number) { return this.http.delete(`${this.url}/Notas/${id}`); }
 
-  // BUSCADOR GLOBAL
   buscarNotas(texto: string): Observable<any[]> {
     return this.http.get<any[]>(`${this.url}/Notas/buscar?texto=${texto}`);
   }
 
-  // --- MATRICULAS (ASIGNATURA_ALUMNOS) ---
-
-  // Obtener todas las matrículas
+  // --- MATRICULAS ---
   getMatriculas() {
     return this.http.get<any[]>(`${this.url}/AsignaturaAlumnos`);
   }
 
-  // Matricular (Ojo a los parámetros, coinciden con tu controlador)
   matricular(alumnoId: number, asignaturaId: number) {
-    return this.http.post(`${this.url}/AsignaturaAlumnos?alumnoId=${alumnoId}&asignaturaId=${asignaturaId}`, {});
+    return this.http.post(`${this.url}/AsignaturaAlumnos`, { alumnoId, asignaturaId });
   }
 
-  // Borrar matrícula
-  desmatricular(id: number) {
+  eliminarMatricula(id: number) {
     return this.http.delete(`${this.url}/AsignaturaAlumnos/${id}`);
   }
 
   // --- DASHBOARD ---
-  getStats(): Observable<DashboardStats> {
+  getStats() {
     return this.http.get<DashboardStats>(`${this.url}/Stats`);
   }
 }

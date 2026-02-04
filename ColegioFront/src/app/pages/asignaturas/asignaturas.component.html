@@ -17,13 +17,12 @@
                     <div *ngIf="clase.errors?.['required']">El nombre es obligatorio.</div>
                     <div *ngIf="clase.errors?.['minlength']">Mínimo 2 letras.</div>
                     <div *ngIf="clase.errors?.['pattern']">Solo letras, puntos (.) o guiones (-).</div>
-
                 </small>
             </div>
 
             <div style="flex: 1;">
                 <input type="text" [(ngModel)]="formAsignatura.profesor" name="profesor" required maxlength="50"
-                    minlength="3" pattern="^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s\.-]+$" placeholder="Nombre del Profesor"
+                    minlength="3" pattern="^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s\.-]+$" placeholder="Profesor Asignado"
                     #profesor="ngModel" [class.input-error]="profesor.invalid && (profesor.dirty || profesor.touched)"
                     style="width: 100%;">
 
@@ -68,5 +67,11 @@
                     <button (click)="eliminar(asig.id)" class="btn-borrar">🗑️</button>
                 </td>
             </tr>
+            <tr *ngIf="(asignaturas$ | async)?.length === 0">
+                <td colspan="3" style="text-align:center; padding: 20px; color: #777;">
+                    No hay asignaturas creadas.
+                </td>
+            </tr>
         </tbody>
     </table>
+</div>

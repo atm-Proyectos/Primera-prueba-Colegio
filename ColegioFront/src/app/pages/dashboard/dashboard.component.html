@@ -1,58 +1,67 @@
-<div class="dashboard-container" *ngIf="stats">
+<div class="dashboard-panel">
+    <h2>📊 Cuadro de Mando</h2>
 
-    <div class="kpi-grid">
-        <div class="card card-blue">
-            <h3>👨‍🎓 Alumnos</h3>
-            <p class="numero">{{ stats.totalAlumnos }}</p>
-        </div>
-        <div class="card card-green">
-            <h3>📚 Asignaturas</h3>
-            <p class="numero">{{ stats.totalAsignaturas }}</p>
-        </div>
-        <div class="card card-orange">
-            <h3>🎂 Edad Media</h3>
-            <p class="numero">{{ stats.edadMediaGlobal }}</p>
-        </div>
+    <div *ngIf="loading$ | async" class="loading-container">
+        <div class="spinner"></div>
+        <p>Calculando estadísticas...</p>
     </div>
 
-    <div class="charts-grid">
+    <div class="dashboard-container" *ngIf="(stats$ | async) as stats">
 
-        <div class="chart-card">
-            <h3>👥 Popularidad de Asignaturas</h3>
-            <div class="chart-wrapper">
-                <ngx-charts-bar-vertical [scheme]="colorScheme" [results]="stats.alumnosPorAsignatura"
-                    [gradient]="false" [xAxis]="true" [yAxis]="true" [showXAxisLabel]="true" [showYAxisLabel]="true"
-                    xAxisLabel="Asignatura" yAxisLabel="Alumnos">
-                </ngx-charts-bar-vertical>
+        <div class="kpi-grid">
+            <div class="card card-blue">
+                <h3>👨‍🎓 Alumnos</h3>
+                <p class="numero">{{ stats.totalAlumnos }}</p>
+            </div>
+            <div class="card card-green">
+                <h3>📚 Asignaturas</h3>
+                <p class="numero">{{ stats.totalAsignaturas }}</p>
+            </div>
+            <div class="card card-orange">
+                <h3>🎂 Edad Media</h3>
+                <p class="numero">{{ stats.edadMediaGlobal }}</p>
             </div>
         </div>
 
-        <div class="chart-card">
-            <h3>⭐ Nota Media por Asignatura</h3>
-            <div class="chart-wrapper">
-                <ngx-charts-bar-horizontal [scheme]="colorScheme" [results]="stats.notaMediaPorAsignatura"
-                    [gradient]="false" [xAxis]="true" [yAxis]="true" [showXAxisLabel]="true" [showYAxisLabel]="true"
-                    xAxisLabel="Nota Media" yAxisLabel="Asignatura">
-                </ngx-charts-bar-horizontal>
-            </div>
-        </div>
+        <div class="charts-grid">
 
-        <div class="chart-card">
-            <h3>🎂 Distribución por Edades</h3>
-            <div class="chart-wrapper">
-                <ngx-charts-pie-chart [scheme]="colorScheme" [results]="stats.distribucionEdades" [labels]="true"
-                    [doughnut]="true">
-                </ngx-charts-pie-chart>
+            <div class="chart-card">
+                <h3>👥 Popularidad de Asignaturas</h3>
+                <div class="chart-wrapper">
+                    <ngx-charts-bar-vertical [scheme]="colorScheme" [results]="stats.alumnosPorAsignatura"
+                        [gradient]="false" [xAxis]="true" [yAxis]="true" [showXAxisLabel]="true" [showYAxisLabel]="true"
+                        xAxisLabel="Asignatura" yAxisLabel="Alumnos">
+                    </ngx-charts-bar-vertical>
+                </div>
             </div>
-        </div>
 
-        <div class="chart-card">
-            <h3>✅ Aprobados vs ❌ Suspensos</h3>
-            <div class="chart-wrapper">
-                <ngx-charts-advanced-pie-chart [scheme]="colorSchemeNotas" [results]="stats.aprobadosVsSuspensos">
-                </ngx-charts-advanced-pie-chart>
+            <div class="chart-card">
+                <h3>⭐ Nota Media por Asignatura</h3>
+                <div class="chart-wrapper">
+                    <ngx-charts-bar-horizontal [scheme]="colorScheme" [results]="stats.notaMediaPorAsignatura"
+                        [gradient]="false" [xAxis]="true" [yAxis]="true" [showXAxisLabel]="true" [showYAxisLabel]="true"
+                        xAxisLabel="Nota Media" yAxisLabel="Asignatura">
+                    </ngx-charts-bar-horizontal>
+                </div>
             </div>
-        </div>
 
+            <div class="chart-card">
+                <h3>🎂 Distribución por Edades</h3>
+                <div class="chart-wrapper">
+                    <ngx-charts-pie-chart [scheme]="colorScheme" [results]="stats.distribucionEdades" [labels]="true"
+                        [doughnut]="true">
+                    </ngx-charts-pie-chart>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>✅ Aprobados vs ❌ Suspensos</h3>
+                <div class="chart-wrapper">
+                    <ngx-charts-advanced-pie-chart [scheme]="colorSchemeNotas" [results]="stats.aprobadosVsSuspensos">
+                    </ngx-charts-advanced-pie-chart>
+                </div>
+            </div>
+
+        </div>
     </div>
 </div>
