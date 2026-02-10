@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
 export interface DashboardStats {
   totalAlumnos: number;
@@ -46,7 +47,12 @@ export class ApiService {
   }
 
   matricular(alumnoId: number, asignaturaId: number) {
-    return this.http.post(`${this.url}/AsignaturaAlumnos`, { alumnoId, asignaturaId });
+    const body = {
+      AlumnoId: alumnoId,
+      AsignaturaId: asignaturaId
+    };
+
+    return this.http.post(`${this.url}/AsignaturaAlumnos`, body);
   }
 
   eliminarMatricula(id: number) {
@@ -57,4 +63,65 @@ export class ApiService {
   getStats() {
     return this.http.get<DashboardStats>(`${this.url}/Stats`);
   }
+
+  // LOGIN
+  login(credenciales: any) {
+    return this.http.post<any>(`${this.url}/Auth/login`, credenciales).pipe(
+      tap(respuesta => {
+        if (respuesta && respuesta.token) {
+          localStorage.setItem('token', respuesta.token);
+        }
+      })
+    );
+  }
+
+  // MÉTODO PARA CERRAR SESIÓN (LOGOUT)
+  logout() {
+    localStorage.removeItem('token');
+  }
+
+  // MÉTODO PARA SABER SI ESTAMOS LOGUEADOS
+  estaLogueado(): boolean {
+    return !!localStorage.getItem('token');
+  }
+
+  // Obtener rol crudo del token
+  getRol(): string | null {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+    try {
+      const payload = token.split('.')[1];
+      const datos = JSON.parse(atob(payload));
+      // Buscamos el rol en las claves típicas
+      return datos.role || datos['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  // --- PREGUNTAS CLAVE ---
+
+  soyAdmin(): boolean {
+    return this.getRol() === 'Admin';
+  }
+
+  soyProfesor(): boolean {
+    return this.getRol() === 'Profesor';
+  }
+
+  soyAlumno(): boolean {
+    return this.getRol() === 'Alumno';
+  }
+
+  getUserName(): string | null {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.unique_name || payload.name || 'Usuario';
+    } catch {
+      return null;
+    }
+  }
+
 }

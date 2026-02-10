@@ -2,6 +2,8 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { AuthInterceptor } from './services/auth.interceptor';
+import { HTTP_INTERCEPTORS } from '@angular/common/http';
 
 import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
@@ -28,9 +30,10 @@ import { SpinnerComponent } from './components/spinner/spinner.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
+import { LoginComponent } from './pages/login/login.component';
 
 @NgModule({
-  declarations: [AppComponent, InicioComponent, AlumnosComponent, AsignaturasComponent, NotasComponent, NavbarComponent, FooterComponent, SpinnerComponent, DashboardComponent],
+  declarations: [AppComponent, InicioComponent, AlumnosComponent, AsignaturasComponent, NotasComponent, NavbarComponent, FooterComponent, SpinnerComponent, DashboardComponent, LoginComponent],
   imports: [
     BrowserModule,
     AppRoutingModule,
@@ -52,7 +55,13 @@ import { DashboardComponent } from './pages/dashboard/dashboard.component';
     ]),
     StoreDevtoolsModule.instrument({ maxAge: 25 })
   ],
-  providers: [],
+  providers: [
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true
+    }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

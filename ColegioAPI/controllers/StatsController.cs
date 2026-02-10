@@ -6,9 +6,11 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Collections.Generic;
 using System;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ColegioAPI.Controllers
 {
+    [Authorize(Roles = "Admin, Profesor")]
     [Route("api/[controller]")]
     [ApiController]
     public class StatsController : ControllerBase

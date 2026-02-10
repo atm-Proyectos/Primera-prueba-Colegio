@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ColegioAPI.Data;
 using ColegioAPI.models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ColegioAPI.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class AsignaturaAlumnosController : ControllerBase
@@ -18,6 +20,7 @@ namespace ColegioAPI.Controllers
 
         // GET: Ver todas las matrículas
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<object>>> GetMatriculas()
         {
             return await _context.Asignatura_Alumnos
@@ -37,22 +40,27 @@ namespace ColegioAPI.Controllers
 
         // POST: MATRICULAR A UN ALUMNO EN UNA ASIGNATURA
         [HttpPost]
-        public async Task<ActionResult<AsignaturaAlumno>> Matricular(int alumnoId, int asignaturaId)
+        [Authorize(Roles = "Admin,Profesor,Alumno")]
+        public async Task<ActionResult<AsignaturaAlumno>> Matricular([FromBody] MatriculaDTO datos)
         {
-            // 1. Validar que no esté ya matriculado para no duplicar
+            // Verificamos que los IDs sean válidos (> 0)
+            if (datos.AlumnoId <= 0 || datos.AsignaturaId <= 0)
+            {
+                return BadRequest("IDs de alumno o asignatura no válidos.");
+            }
+
             var existe = await _context.Asignatura_Alumnos
-                .AnyAsync(x => x.AlumnoId == alumnoId && x.AsignaturaId == asignaturaId);
+                .AnyAsync(x => x.AlumnoId == datos.AlumnoId && x.AsignaturaId == datos.AsignaturaId);
 
             if (existe)
             {
                 return BadRequest("El alumno ya está matriculado en esta asignatura.");
             }
 
-            // 2. Crear la nueva matrícula
             var nuevaMatricula = new AsignaturaAlumno
             {
-                AlumnoId = alumnoId,
-                AsignaturaId = asignaturaId,
+                AlumnoId = datos.AlumnoId,
+                AsignaturaId = datos.AsignaturaId,
                 AñoEscolar = 2026,
                 FechaMatricula = DateTime.UtcNow
             };
@@ -65,6 +73,7 @@ namespace ColegioAPI.Controllers
 
         // DELETE: Desmatricular
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,Profesor")]
         public async Task<IActionResult> Desmatricular(int id)
         {
             var matricula = await _context.Asignatura_Alumnos.FindAsync(id);
@@ -73,6 +82,12 @@ namespace ColegioAPI.Controllers
             _context.Asignatura_Alumnos.Remove(matricula);
             await _context.SaveChangesAsync();
             return NoContent();
+        }
+
+        public class MatriculaDTO
+        {
+            public int AlumnoId { get; set; }
+            public int AsignaturaId { get; set; }
         }
     }
 }

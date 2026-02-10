@@ -2,11 +2,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ColegioAPI.Data;
 using ColegioAPI.models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ColegioAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class AsignaturasController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -18,6 +20,7 @@ namespace ColegioAPI.Controllers
 
         // GET:
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<Asignaturas>>> GetAsignaturas()
         {
             return await _context.Asignaturas.ToListAsync();
@@ -25,6 +28,7 @@ namespace ColegioAPI.Controllers
 
         // POST:
         [HttpPost]
+        [Authorize(Roles = "Admin,Profesor,Alumno")]
         public async Task<ActionResult<Asignaturas>> PostAsignatura(Asignaturas asignatura)
         {
             _context.Asignaturas.Add(asignatura);
@@ -34,6 +38,7 @@ namespace ColegioAPI.Controllers
 
         // PUT: api/Asignaturas/5
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,Profesor,Alumno")]
         public async Task<IActionResult> PutAsignatura(int id, Asignaturas asignatura)
         {
             if (id != asignatura.Id) return BadRequest();
@@ -52,6 +57,7 @@ namespace ColegioAPI.Controllers
 
         // DELETE:
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,Profesor")]
         public async Task<IActionResult> DeleteAsignatura(int id)
         {
             var asignatura = await _context.Asignaturas.FindAsync(id);

@@ -5,7 +5,7 @@
         {{ mensajeError }}
     </div>
 
-    <form #formAsig="ngForm" (ngSubmit)="guardar()">
+    <form *ngIf="!api.soyAlumno()" #formAsig="ngForm" (ngSubmit)="guardar()">
         <div class="filtros-dashboard" style="align-items: flex-start;">
             <div style="flex: 1;">
                 <input type="text" [(ngModel)]="formAsignatura.clase" name="clase" required maxlength="100"
@@ -55,14 +55,14 @@
             <tr>
                 <th>Asignatura</th>
                 <th>Profesor</th>
-                <th>Acciones</th>
+                <th *ngIf="!api.soyAlumno()">Acciones</th>
             </tr>
         </thead>
         <tbody>
             <tr *ngFor="let asig of asignaturas$ | async">
                 <td>{{ asig.clase }}</td>
                 <td>{{ asig.profesor || '---' }}</td>
-                <td>
+                <td *ngIf="!api.soyAlumno()">
                     <button (click)="editar(asig)" class="btn-editar">✏️</button>
                     <button (click)="eliminar(asig.id)" class="btn-borrar">🗑️</button>
                 </td>

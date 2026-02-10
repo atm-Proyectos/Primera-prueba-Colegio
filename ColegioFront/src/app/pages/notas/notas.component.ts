@@ -3,7 +3,7 @@ import { ApiService } from 'src/app/services/api.service';
 import { Store } from '@ngrx/store';
 import { Notas } from 'src/app/models/notas.models';
 import { cargarNotas } from 'src/app/state/Notas/notas.actions';
-import { Observable } from 'rxjs';
+import { forkJoin, Observable } from 'rxjs';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -31,7 +31,7 @@ export class NotasComponent implements OnInit {
   notaIdEditar: number = 0;
 
   constructor(
-    private api: ApiService,
+    public api: ApiService,
     private store: Store<{ notas: any }>) {
     this.notas$ = this.store.select(state => state.notas.notas);
     this.cargando$ = this.store.select(state => state.notas.cargando);
@@ -40,87 +40,121 @@ export class NotasComponent implements OnInit {
 
   ngOnInit(): void {
     this.store.dispatch(cargarNotas());
-    this.cargarAuxiliares();
-  }
 
-  cargarAuxiliares() {
-    this.api.getAlumnos().subscribe(res => this.listaAlumnos = res);
-    this.api.getMatriculas().subscribe(res => this.listaMatriculas = res);
+    forkJoin([
+      this.api.getAlumnos(),
+      this.api.getMatriculas()
+    ]).subscribe({
+      next: (results) => {
+        this.listaAlumnos = results[0];
+        this.listaMatriculas = results[1];
+        this.cargando = false;
+      },
+      error: (err) => {
+        console.error("Error cargando datos iniciales", err);
+        this.cargando = false;
+      }
+    });
   }
 
   alCambiarAlumno() {
+    // Limpiamos la asignatura seleccionada anterior para evitar errores
     this.formSeleccion.asignaturaId = null;
-    const alumnoId = this.formSeleccion.alumnoId;
-    if (alumnoId) {
-      const matriculas = this.listaMatriculas.filter(m => m.alumnoId == alumnoId);
-      this.listaAsignaturasDelAlumno = matriculas.map(m => m.asignatura);
-    } else {
-      this.listaAsignaturasDelAlumno = [];
+
+    // Filtramos las matrículas: Buscamos aquellas donde el alumnoId coincida
+    // Usamos '==' para evitar problemas si uno es string y otro number
+    this.listaAsignaturasDelAlumno = this.listaMatriculas
+      .filter(m => m.alumnoId == this.formSeleccion.alumnoId);
+
+    // Si no hay asignaturas, avisamos (opcional, mantenemos tu estilo de alertas)
+    if (this.listaAsignaturasDelAlumno.length === 0 && this.formSeleccion.alumnoId) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Sin asignaturas',
+        text: 'Este alumno no está matriculado en ninguna clase.',
+        timer: 3000
+      });
     }
   }
 
   guardar() {
-    // Validaciones con SweetAlert
-    if (!this.valorNota || !this.formSeleccion.alumnoId || !this.formSeleccion.asignaturaId) {
-      Swal.fire('Faltan datos', 'Selecciona alumno, asignatura y escribe una nota.', 'warning');
+    this.mensajeError = "";
+
+    // VALIDACIÓN 1: Buscar la matrícula correcta (El cruce entre Alumno y Asignatura)
+    // El backend necesita el ID de la tabla intermedia (AsignaturaAlumnoId), no los sueltos.
+    const matriculaEncontrada = this.listaMatriculas.find(m =>
+      m.alumnoId == this.formSeleccion.alumnoId &&
+      m.asignaturaId == this.formSeleccion.asignaturaId
+    );
+
+    if (!matriculaEncontrada) {
+      Swal.fire('Error', 'No se encontró la matrícula válida para este alumno y asignatura.', 'error');
       return;
     }
 
-    if (this.valorNota < 0 || this.valorNota > 10) {
-      Swal.fire('Nota inválida', 'La nota debe estar entre 0 y 10.', 'error');
+    if (this.valorNota === null || this.valorNota < 0 || this.valorNota > 10) {
+      this.mensajeError = "La nota debe estar entre 0 y 10";
       return;
     }
 
-    const objetoNota = {
+    // Preparamos el objeto tal cual lo pide el Backend (ModelNotas.cs)
+    const nuevaNota: Notas = {
       id: this.notaIdEditar,
-      valor: this.valorNota,
-      alumnoId: this.formSeleccion.alumnoId,
-      asignaturaId: this.formSeleccion.asignaturaId
+      valor: this.valorNota!,
+      nombreAlumno: "", // No necesario para enviar
+      nombreAsignatura: "", // No necesario para enviar
+      asignaturaAlumnoId: matriculaEncontrada.id // <--- AQUÍ ESTÁ LA CLAVE (ID de la matrícula)
     };
 
-    const request = this.notaIdEditar === 0
-      ? this.api.guardarNota(objetoNota)
-      : this.api.editarNota(this.notaIdEditar, objetoNota);
-
-    request.subscribe({
-      next: () => {
-        Swal.fire({
-          icon: 'success',
-          title: '¡Nota Guardada!',
-          showConfirmButton: false,
-          timer: 1500
-        });
-        this.store.dispatch(cargarNotas());
-        this.limpiar();
-      },
-      error: (err) => {
-        console.error(err);
-        Swal.fire('Error', 'No se pudo guardar la nota.', 'error');
-      }
-    });
+    if (this.notaIdEditar === 0) {
+      this.api.guardarNota(nuevaNota).subscribe({
+        next: () => {
+          Swal.fire('Guardado', 'Nota registrada correctamente', 'success');
+          this.store.dispatch(cargarNotas());
+          this.limpiar();
+        },
+        error: (err) => Swal.fire('Error', 'No se pudo guardar la nota', 'error')
+      });
+    } else {
+      this.api.editarNota(this.notaIdEditar, nuevaNota).subscribe({
+        next: () => {
+          Swal.fire('Actualizado', 'Nota modificada correctamente', 'success');
+          this.store.dispatch(cargarNotas());
+          this.limpiar();
+        },
+        error: (err) => Swal.fire('Error', 'No se pudo actualizar', 'error')
+      });
+    }
   }
 
   editar(nota: any) {
     this.notaIdEditar = nota.id;
     this.valorNota = nota.valor;
-    this.formSeleccion.alumnoId = nota.alumnoId;
 
-    // Cargamos las asignaturas posibles de este alumno
-    this.alCambiarAlumno();
+    // Nota: Para editar correctamente los selectores, necesitaríamos saber el ID del alumno
+    // que viene en la nota. Si tu backend no devuelve alumnoId en el GET de notas,
+    // los selectores podrían no marcarse solos. Pero el guardado funcionará.
 
-    // Aviso informativo suave en vez de alert()
+    // Intentamos preseleccionar si tenemos los datos (depende de tu API de notas)
+    if (nota.asignaturaAlumno && nota.asignaturaAlumno.alumnoId) {
+      this.formSeleccion.alumnoId = nota.asignaturaAlumno.alumnoId;
+      this.alCambiarAlumno(); // Cargamos asignaturas
+
+      setTimeout(() => {
+        // Buscamos la asignatura dentro de la matricula
+        if (nota.asignaturaAlumno) {
+          this.formSeleccion.asignaturaId = nota.asignaturaAlumno.asignaturaId;
+        }
+      }, 100);
+    }
+
     Swal.fire({
       icon: 'info',
       title: 'Modo Edición',
-      text: 'Confirma la asignatura antes de guardar.',
-      timer: 2500,
+      text: 'Modifica el valor y guarda.',
+      timer: 2000,
       showConfirmButton: false
     });
-
-    // Pequeño retardo para que el select se actualice
-    setTimeout(() => {
-      this.formSeleccion.asignaturaId = nota.asignaturaId;
-    }, 100);
   }
 
   limpiar() {
@@ -151,13 +185,5 @@ export class NotasComponent implements OnInit {
         });
       }
     });
-  }
-
-  evitarSimbolos(event: any) {
-    if (['-', '+', 'e', 'E'].includes(event.key)) {
-      event.preventDefault();
-      this.mostrarAvisoSimbolos = true;
-      setTimeout(() => this.mostrarAvisoSimbolos = false, 2000);
-    }
   }
 }

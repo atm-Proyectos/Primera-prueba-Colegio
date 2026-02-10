@@ -22,7 +22,7 @@ export class AsignaturasComponent implements OnInit {
   mensajeError: string = "";
 
   constructor(
-    private api: ApiService,
+    public api: ApiService,
     private store: Store<{ asignaturas: any }>) {
 
     this.asignaturas$ = this.store.select(state => state.asignaturas.asignaturas);

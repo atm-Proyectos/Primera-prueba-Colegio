@@ -36,7 +36,7 @@ export class AlumnosComponent implements OnInit {
 
   constructor(
     private store: Store<{ alumnos: any }>,
-    private api: ApiService
+    public api: ApiService
   ) {
     this.alumnos$ = this.store.select(state => state.alumnos.alumnos);
     this.cargando$ = this.store.select(state => state.alumnos.loading);
@@ -44,12 +44,13 @@ export class AlumnosComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Llamamos a la carga inicial
-    this.cargarAlumnos();
+    // 1. Suscribirse a los datos del Store
+    this.alumnos$ = this.store.select(state => state.alumnos.alumnos);
+    this.cargando$ = this.store.select(state => state.alumnos.loading);
+    this.error$ = this.store.select(state => state.alumnos.error);
 
-    // Cargamos auxiliares
-    this.api.getAsignaturas().subscribe(data => this.listaAsignaturas = data);
-    this.api.getMatriculas().subscribe(data => this.listaMatriculas = data);
+    // 2. IMPORTANTE: Pedir que se carguen los alumnos al iniciar 👇
+    this.store.dispatch(cargarAlumnos());
   }
 
   cargarAlumnos() {
@@ -113,8 +114,12 @@ export class AlumnosComponent implements OnInit {
   }
 
   limpiar() {
-    this.formAlumno = { id: 0, nombre: "", apellido: "", edad: 0 };
-    this.mensajeError = "";
+    this.formAlumno = {
+      id: 0,
+      nombre: "",
+      apellido: "",
+      edad: 0
+    }
   }
 
   manejarError(err: any) {
@@ -129,7 +134,15 @@ export class AlumnosComponent implements OnInit {
   abrirMatriculas(alumno: any) {
     this.alumnoSeleccionado = alumno;
     this.modoMatricula = true;
-    this.filtrarMatriculas();
+
+    this.api.getAsignaturas().subscribe(data => {
+      this.listaAsignaturas = data;
+    });
+
+    this.api.getMatriculas().subscribe(data => {
+      this.listaMatriculas = data;
+      this.filtrarMatriculas();
+    });
   }
 
   filtrarMatriculas() {
@@ -139,25 +152,47 @@ export class AlumnosComponent implements OnInit {
   }
 
   matricular() {
-    if (!this.asignaturaParaMatricular || !this.alumnoSeleccionado) return;
+    if (!this.asignaturaParaMatricular) return;
 
     this.api.matricular(this.alumnoSeleccionado.id, this.asignaturaParaMatricular).subscribe({
       next: () => {
+        // ✅ 1. ÉXITO: Mostramos un mensaje temporal (Toast)
         const Toast = Swal.mixin({
           toast: true,
           position: 'top-end',
           showConfirmButton: false,
-          timer: 3000
+          timer: 3000,
+          timerProgressBar: true,
+          didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer)
+            toast.addEventListener('mouseleave', Swal.resumeTimer)
+          }
         });
-        Toast.fire({ icon: 'success', title: 'Asignatura añadida' });
 
+        Toast.fire({
+          icon: 'success',
+          title: 'Matrícula realizada correctamente'
+        });
+
+        // ✅ 2. Recargamos la lista para que aparezca la nueva asignatura
         this.api.getMatriculas().subscribe(data => {
           this.listaMatriculas = data;
           this.filtrarMatriculas();
         });
+
+        // ✅ 3. Reseteamos el select para que vuelva a "Elegir Asignatura"
         this.asignaturaParaMatricular = null;
       },
-      error: (err) => Swal.fire("Error", "No se pudo matricular (¿quizás ya lo está?)", "error")
+      error: (err) => {
+        const mensajeError = err.error || "No se pudo realizar la matrícula.";
+
+        Swal.fire({
+          icon: 'warning',
+          title: 'No se pudo matricular',
+          text: mensajeError,
+          confirmButtonColor: '#3085d6',
+        });
+      }
     });
   }
 
@@ -188,5 +223,6 @@ export class AlumnosComponent implements OnInit {
   cerrarMatriculas() {
     this.modoMatricula = false;
     this.alumnoSeleccionado = null;
+    this.asignaturaParaMatricular = null;
   }
 }

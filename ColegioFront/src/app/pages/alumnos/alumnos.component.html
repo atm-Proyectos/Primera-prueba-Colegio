@@ -5,7 +5,7 @@
     {{ mensajeError }}
   </div>
 
-  <form #formAlu="ngForm" (ngSubmit)="guardar()">
+  <form #formAlu="ngForm" (ngSubmit)="guardar()" *ngIf="api.soyAdmin()">
     <div class="filtros-dashboard" style="display: flex; gap: 10px; align-items: flex-start;">
 
       <div style="flex: 1;">
@@ -14,59 +14,51 @@
           [class.input-error]="nombre.invalid && (nombre.dirty || nombre.touched)" style="width: 100%;">
 
         <small *ngIf="nombre.invalid && (nombre.dirty || nombre.touched)" class="msg-error">
-          <div *ngIf="nombre.errors?.['required']">Obligatorio.</div>
-          <div *ngIf="nombre.errors?.['minlength']">Mínimo 2 letras.</div>
-          <div *ngIf="nombre.errors?.['pattern']">Solo letras.</div>
+          <div *ngIf="nombre.errors?.['required']">El nombre es obligatorio</div>
+          <div *ngIf="nombre.errors?.['minlength']">Mínimo 2 letras</div>
+          <div *ngIf="nombre.errors?.['pattern']">Solo letras</div>
         </small>
       </div>
 
       <div style="flex: 1;">
-        <input type="text" [(ngModel)]="formAlumno.apellido" name="apellido" required minlength="2" maxlength="100"
+        <input type="text" [(ngModel)]="formAlumno.apellido" name="apellido" required minlength="2" maxlength="50"
           pattern="^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s\.-]+$" placeholder="Apellidos" #apellido="ngModel"
           [class.input-error]="apellido.invalid && (apellido.dirty || apellido.touched)" style="width: 100%;">
 
         <small *ngIf="apellido.invalid && (apellido.dirty || apellido.touched)" class="msg-error">
-          <div *ngIf="apellido.errors?.['required']">Obligatorio.</div>
-          <div *ngIf="apellido.errors?.['minlength']">Mínimo 2 letras.</div>
-          <div *ngIf="apellido.errors?.['pattern']">Solo letras.</div>
+          <div *ngIf="apellido.errors?.['required']">El apellido es obligatorio</div>
         </small>
       </div>
 
       <div style="width: 100px;">
-        <input type="number" [(ngModel)]="formAlumno.edad" name="edad" required min="3" max="99" placeholder="Edad"
+        <input type="number" [(ngModel)]="formAlumno.edad" name="edad" required min="3" max="100" placeholder="Edad"
           #edad="ngModel" [class.input-error]="edad.invalid && (edad.dirty || edad.touched)" style="width: 100%;">
 
         <small *ngIf="edad.invalid && (edad.dirty || edad.touched)" class="msg-error">
-          <div *ngIf="edad.errors?.['required']">Obligatorio.</div>
-          <div *ngIf="edad.errors?.['min']">Min 3.</div>
-          <div *ngIf="edad.errors?.['max']">Max 99.</div>
+          Edad 3-100
         </small>
       </div>
 
-      <div style="display: flex; gap: 5px;">
-        <button type="submit" class="btn-guardar" [disabled]="formAlu.invalid || (cargando$ | async)"
-          [title]="formAlu.invalid ? 'Rellena todos los campos' : 'Guardar'">
-          {{ formAlumno.id === 0 ? '💾 Crear' : '🔄 Actualizar' }}
-        </button>
+      <button type="submit" class="btn-guardar" [disabled]="formAlu.invalid">
+        {{ formAlumno.id === 0 ? '➕ Añadir' : '💾 Actualizar' }}
+      </button>
 
-        <button *ngIf="formAlumno.id !== 0" type="button" (click)="limpiar()" class="btn-cancelar">
-          ❌
-        </button>
-      </div>
-
+      <button type="button" *ngIf="formAlumno.id !== 0" (click)="limpiar()" class="btn-borrar"
+        style="background-color: #7f8c8d;">
+        Cancelar
+      </button>
     </div>
   </form>
 
-  <div *ngIf="(cargando$ | async)" class="loading-container">
-    <div class="spinner"></div>
-    <p>Cargando alumnos...</p>
-  </div>
+  <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+
+  <div *ngIf="cargando$ | async" class="cargando">⏳ Cargando alumnos...</div>
 
   <table class="tabla-datos" *ngIf="!(cargando$ | async)">
     <thead>
       <tr>
         <th>Nombre</th>
-        <th>Apellido</th>
+        <th>Apellidos</th>
         <th>Edad</th>
         <th>Acciones</th>
       </tr>
@@ -76,12 +68,17 @@
         <td>{{ alumno.nombre }}</td>
         <td>{{ alumno.apellido }}</td>
         <td>{{ alumno.edad }} años</td>
+
         <td>
-          <button (click)="editar(alumno)" class="btn-editar" title="Editar datos">✏️</button>
-          <button (click)="eliminar(alumno.id)" class="btn-borrar" title="Borrar alumno">🗑️</button>
+          <ng-container *ngIf="api.soyAdmin()">
+            <button (click)="editar(alumno)" class="btn-editar" title="Editar">✏️</button>
+            <button (click)="eliminar(alumno.id)" class="btn-borrar" title="Eliminar">🗑️</button>
+          </ng-container>
+
           <button (click)="abrirMatriculas(alumno)" class="btn-matricular" title="Gestionar asignaturas">🎓</button>
         </td>
       </tr>
+
       <tr *ngIf="(alumnos$ | async)?.length === 0">
         <td colspan="4" style="text-align:center; padding: 20px; color: #777;">
           No hay alumnos registrados.
@@ -92,7 +89,8 @@
 
   <div class="modal-overlay" *ngIf="modoMatricula">
     <div class="modal-content">
-      <h3>🎓 Matrículas de: {{ alumnoSeleccionado.nombre }}</h3>
+      <h3>🎓 Matrículas de: {{ alumnoSeleccionado?.nombre }}</h3>
+
       <div class="form-matricula">
         <select [(ngModel)]="asignaturaParaMatricular" style="flex:1; margin-right:5px;">
           <option [ngValue]="null">-- Elegir Asignatura --</option>
@@ -104,7 +102,9 @@
           ➕ Añadir
         </button>
       </div>
+
       <hr>
+
       <ul class="lista-asignaturas">
         <li *ngFor="let m of matriculasAlumno">
           {{ m.asignatura }}
@@ -114,10 +114,12 @@
           </button>
         </li>
         <li *ngIf="matriculasAlumno.length === 0" style="text-align:center; color:#999;">
-          Sin asignaturas asignadas.
+          Sin asignaturas asignadas
         </li>
       </ul>
+
       <button (click)="cerrarMatriculas()" class="btn-cerrar-modal">Cerrar</button>
     </div>
   </div>
+
 </div>

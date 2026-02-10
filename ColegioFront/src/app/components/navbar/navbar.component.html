@@ -2,11 +2,27 @@
     <div class="logo">
         🎓 Colegio App
     </div>
+
     <div class="menu">
+        <div class="nav-user-info" *ngIf="api.estaLogueado()">
+            <span class="user-name">👤 </span>
+            <span class="user-role" [ngClass]="rolUsuario.toLowerCase()">
+                {{ rolUsuario }}
+            </span>
+        </div>
         <button routerLink="/inicio" routerLinkActive="active">🏠 Inicio</button>
         <button routerLink="/alumnos" routerLinkActive="active">👥 Alumnos</button>
         <button routerLink="/asignaturas" routerLinkActive="active">📚 Asignaturas</button>
         <button routerLink="/notas" routerLinkActive="active">📝 Notas</button>
-        <button routerLink="/dashboard" routerLinkActive="active">📊 Dashboard</button>
+        <button *ngIf="!api.soyAlumno()" routerLink="/dashboard" routerLinkActive="active">📊 Dashboard</button>
+
+
+        <div style="margin-left: auto; display: flex; gap: 10px;">
+
+            <button *ngIf="!api.estaLogueado()" routerLink="/login" class="btn-login">🔐 Login</button>
+            <!-- nombre usuario -->
+            <button *ngIf="api.estaLogueado()" (click)="salir()"
+                style="background-color: #e74c3c; border-color: #c0392b;"> 🚪 Salir</button>
+        </div>
     </div>
 </nav>

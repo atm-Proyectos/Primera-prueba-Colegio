@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ColegioAPI.Data;
 using ColegioAPI.models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ColegioAPI.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class NotasController : ControllerBase
@@ -65,7 +67,8 @@ namespace ColegioAPI.Controllers
         //  MÉTODOS BÁSICOS (CRUD)
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<object>>> GetNotas()
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<dynamic>>> GetNotas()
         {
             var notas = await _context.Notas
                 .Include(n => n.AsignaturaAlumno)
@@ -87,6 +90,7 @@ namespace ColegioAPI.Controllers
 
         // POST
         [HttpPost]
+        [Authorize(Roles = "!Alumno")]
         public async Task<ActionResult<Notas>> PostNota(Notas nota)
         {
             _context.Notas.Add(nota);
@@ -96,6 +100,7 @@ namespace ColegioAPI.Controllers
 
         // PUT: api/Notas/5
         [HttpPut("{id}")]
+        [Authorize(Roles = "!Alumno")]
         public async Task<IActionResult> PutNota(int id, Notas nota)
         {
             if (id != nota.Id) return BadRequest();
@@ -114,6 +119,7 @@ namespace ColegioAPI.Controllers
 
         // DELETE
         [HttpDelete("{id}")]
+        [Authorize(Roles = "!Alumno")]
         public async Task<IActionResult> DeleteNota(int id)
         {
             var nota = await _context.Notas.FindAsync(id);

@@ -39,3 +39,15 @@ button.active {
     border-color: #3498db;
     font-weight: bold;
 }
+
+.btn-login {
+    background-color: #2ecc71;
+    border: none;
+    font-weight: bold;
+}
+
+.btn-logout {
+    background-color: #e74c3c;
+    border: none;
+    font-weight: bold;
+}

@@ -2,6 +2,7 @@ import { Component, OnInit } from "@angular/core";
 import { ApiService } from "src/app/services/api.service";
 import { forkJoin } from "rxjs";
 
+
 @Component({
   selector: 'app-inicio',
   templateUrl: './inicio.component.html',
@@ -13,26 +14,23 @@ export class InicioComponent implements OnInit {
   resultados: any[] = [];
   busqueda: string = "";
 
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService) { }
 
   ngOnInit() {
-    this.cargarTodo();   
+    this.cargarDatos();
   }
 
-  cargarTodo() {
-    forkJoin({
-      alumnos: this.api.getAlumnos(),
-      asignaturas: this.api.getAsignaturas(),
-      notas: this.api.getNotas()
-    }).subscribe({
-      next: (res) => {
-        this.alumnos = res.alumnos;
-        this.asignaturas = res.asignaturas;
-        this.resultados = res.notas;
-
-        this.filtrar();
+  cargarDatos() {
+    this.api.buscarNotas(this.busqueda).subscribe({
+      next: (data) => {
+        // Mapeamos los datos para que coincidan con tu HTML actual
+        this.resultados = data.map(item => ({
+          alumnoNombre: item.alumno,       // El backend ya nos da el nombre completo
+          asignaturaNombre: item.asignatura, // Y el nombre de la clase
+          valor: item.valor
+        }));
       },
-      error: (err) => console.error("Error al cargar los datos", err)
+      error: (err) => console.error("Error al cargar notas:", err)
     });
   }
 

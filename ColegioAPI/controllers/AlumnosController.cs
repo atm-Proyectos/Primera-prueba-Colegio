@@ -2,9 +2,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ColegioAPI.Data;
 using ColegioAPI.models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace ColegioAPI.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class AlumnosController : ControllerBase
@@ -18,12 +22,14 @@ namespace ColegioAPI.Controllers
 
         // 1. LEER TODOS
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<Alumnos>>> GetAlumnos()
         {
             return await _context.Alumnos.OrderBy(a => a.Apellido).ToListAsync();
         }
 
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<Alumnos>> GetAlumno(int id)
         {
             var alumno = await _context.Alumnos.FindAsync(id);
@@ -33,6 +39,7 @@ namespace ColegioAPI.Controllers
 
         // 2. CREAR
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<Alumnos>> PostAlumno(Alumnos alumno)
         {
             _context.Alumnos.Add(alumno);
@@ -42,6 +49,7 @@ namespace ColegioAPI.Controllers
 
         // 3. EDITAR (PUT)
         [HttpPut("{id}")]
+        [Authorize(Roles = "!Alumno")]
         public async Task<IActionResult> PutAlumno(int id, Alumnos alumno)
         {
             if (id != alumno.Id) return BadRequest();
@@ -63,6 +71,7 @@ namespace ColegioAPI.Controllers
 
         // 4. BORRAR (DELETE)
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteAlumno(int id)
         {
             var alumno = await _context.Alumnos.FindAsync(id);
