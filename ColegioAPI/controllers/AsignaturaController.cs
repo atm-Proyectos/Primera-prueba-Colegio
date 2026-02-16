@@ -3,6 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using ColegioAPI.Data;
 using ColegioAPI.models;
 using Microsoft.AspNetCore.Authorization;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
+using System;
 
 namespace ColegioAPI.Controllers
 {
@@ -18,34 +22,79 @@ namespace ColegioAPI.Controllers
             _context = context;
         }
 
-        // GET:
+        // GET: api/Asignaturas
         [HttpGet]
-        [Authorize]
         public async Task<ActionResult<IEnumerable<Asignaturas>>> GetAsignaturas()
         {
+            var usuario = User.Identity?.Name;
+            var esProfesor = User.IsInRole("Profesor");
+
+            IQueryable<Asignaturas> query = _context.Asignaturas;
+
+            if (esProfesor)
+            {
+                return await _context.Asignaturas
+                    .Where(a => EF.Functions.ILike(a.Profesor, usuario))
+                    .ToListAsync();
+
+            }
+            // Admin y Alumnos ven todas (o ajusta según tu lógica de lectura)
             return await _context.Asignaturas.ToListAsync();
+
         }
 
-        // POST:
+        // POST: Crear Asignatura
         [HttpPost]
-        [Authorize(Roles = "Admin,Profesor,Alumno")]
-        public async Task<ActionResult<Asignaturas>> PostAsignatura(Asignaturas asignatura)
+        [Authorize(Roles = "Admin,Profesor")] // <--- PERMITIMOS AMBOS ROLES
+        public async Task<IActionResult> PostAsignatura(Asignaturas asignatura)
         {
+            // SEGURIDAD: Si es Profesor, forzamos que se la asigne a sí mismo
+            if (User.IsInRole("Profesor"))
+            {
+                asignatura.Profesor = User.Identity?.Name ?? "Desconocido";
+            }
+
+            // Normalizamos el nombre de la clase
+            asignatura.Clase = Normalizar(asignatura.Clase);
+
+            // Validaciones
+            if (string.IsNullOrEmpty(asignatura.Clase))
+                return BadRequest("El nombre de la asignatura es obligatorio.");
+
+            if (string.IsNullOrEmpty(asignatura.Profesor))
+                return BadRequest("El profesor es obligatorio.");
+
             _context.Asignaturas.Add(asignatura);
             await _context.SaveChangesAsync();
+
             return CreatedAtAction("GetAsignaturas", new { id = asignatura.Id }, asignatura);
         }
 
-        // PUT: api/Asignaturas/5
+        // PUT: Editar Asignatura
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Profesor,Alumno")]
+        [Authorize(Roles = "Admin,Profesor")]
         public async Task<IActionResult> PutAsignatura(int id, Asignaturas asignatura)
         {
             if (id != asignatura.Id) return BadRequest();
 
+            // Seguridad extra: Un profesor no debería poder cambiar el profesor de la asignatura
+            if (User.IsInRole("Profesor"))
+            {
+                var original = await _context.Asignaturas.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id);
+                if (original == null) return NotFound();
+
+                // Si intenta cambiar el dueño de la asignatura, lo bloqueamos o lo ignoramos
+                if (original.Profesor != User.Identity?.Name) return Forbid();
+
+                asignatura.Profesor = User.Identity?.Name; // Mantenemos su nombre
+            }
+
             _context.Entry(asignatura).State = EntityState.Modified;
 
-            try { await _context.SaveChangesAsync(); }
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
             catch (DbUpdateConcurrencyException)
             {
                 if (!_context.Asignaturas.Any(e => e.Id == id)) return NotFound();
@@ -55,19 +104,23 @@ namespace ColegioAPI.Controllers
             return NoContent();
         }
 
-        // DELETE:
+        // DELETE: api/Asignaturas/5
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin,Profesor")]
+        [Authorize(Roles = "Admin")] // Solo Admin borra para evitar desastres
         public async Task<IActionResult> DeleteAsignatura(int id)
         {
             var asignatura = await _context.Asignaturas.FindAsync(id);
             if (asignatura == null) return NotFound();
-
-            // Verificar si tiene notas antes de borrar para no romper la BD
             _context.Asignaturas.Remove(asignatura);
             await _context.SaveChangesAsync();
-
             return NoContent();
+        }
+
+        private string Normalizar(string texto)
+        {
+            if (string.IsNullOrEmpty(texto)) return "";
+            // Normalización simple para evitar espacios raros
+            return texto.Trim();
         }
     }
 }

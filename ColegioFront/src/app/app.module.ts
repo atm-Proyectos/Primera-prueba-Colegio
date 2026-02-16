@@ -1,5 +1,7 @@
 import { NgModule } from '@angular/core';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { BrowserModule } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { AuthInterceptor } from './services/auth.interceptor';
@@ -27,13 +29,26 @@ import { NotasComponent } from './pages/notas/notas.component';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { FooterComponent } from './components/footer/footer.component';
 import { SpinnerComponent } from './components/spinner/spinner.component';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { LoginComponent } from './pages/login/login.component';
+import { PerfilAlumnoComponent } from './pages/perfil-alumno/perfil-alumno.component';
+import { DashboarProfesorComponent } from './pages/dashboar-profesor/dashboar-profesor.component';
 
 @NgModule({
-  declarations: [AppComponent, InicioComponent, AlumnosComponent, AsignaturasComponent, NotasComponent, NavbarComponent, FooterComponent, SpinnerComponent, DashboardComponent, LoginComponent],
+  declarations: [
+    AppComponent,
+    InicioComponent,
+    AlumnosComponent,
+    AsignaturasComponent,
+    NotasComponent,
+    NavbarComponent,
+    FooterComponent,
+    SpinnerComponent,
+    DashboardComponent,
+    LoginComponent,
+    PerfilAlumnoComponent,
+    DashboarProfesorComponent
+  ],
   imports: [
     BrowserModule,
     AppRoutingModule,

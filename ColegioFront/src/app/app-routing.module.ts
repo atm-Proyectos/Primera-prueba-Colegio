@@ -6,6 +6,8 @@ import { AsignaturasComponent } from './pages/asignaturas/asignaturas.component'
 import { NotasComponent } from './pages/notas/notas.component';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { LoginComponent } from './pages/login/login.component';
+import { PerfilAlumnoComponent } from './pages/perfil-alumno/perfil-alumno.component';
+import { DashboarProfesorComponent } from './pages/dashboar-profesor/dashboar-profesor.component';
 
 const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -15,6 +17,8 @@ const routes: Routes = [
   { path: 'asignaturas', component: AsignaturasComponent },
   { path: 'notas', component: NotasComponent },
   { path: 'dashboard', component: DashboardComponent },
+  { path: 'mi-perfil', component: PerfilAlumnoComponent },
+  { path: 'dashboard-profesor', component: DashboarProfesorComponent },
   { path: '**', redirectTo: 'login' }
 ];
 

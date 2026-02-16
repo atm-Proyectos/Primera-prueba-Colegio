@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace ColegioAPI.models
 {
@@ -13,5 +14,8 @@ namespace ColegioAPI.models
         [Required]
         [MaxLength(50)]
         public string Profesor { get; set; } = string.Empty;
+
+        [JsonIgnore]
+        public List<AsignaturaAlumno>? AsignaturaAlumnos { get; set; }
     }
 }

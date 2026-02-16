@@ -3,12 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using ColegioAPI.Data;
 using ColegioAPI.models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 
 namespace ColegioAPI.Controllers
 {
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class AlumnosController : ControllerBase
@@ -20,41 +17,70 @@ namespace ColegioAPI.Controllers
             _context = context;
         }
 
-        // 1. LEER TODOS
+        // GET: api/Alumnos
         [HttpGet]
-        [Authorize]
         public async Task<ActionResult<IEnumerable<Alumnos>>> GetAlumnos()
         {
-            return await _context.Alumnos.OrderBy(a => a.Apellido).ToListAsync();
+            return await _context.Alumnos.ToListAsync();
         }
 
+        // GET: api/Alumnos/5
         [HttpGet("{id}")]
-        [Authorize]
-        public async Task<ActionResult<Alumnos>> GetAlumno(int id)
+        public async Task<ActionResult<Alumnos>> GetAlumnos(int id)
         {
-            var alumno = await _context.Alumnos.FindAsync(id);
-            if (alumno == null) return NotFound();
-            return alumno;
+            var alumnos = await _context.Alumnos.FindAsync(id);
+            if (alumnos == null) return NotFound();
+            return alumnos;
         }
 
-        // 2. CREAR
+        // POST: api/Alumnos
         [HttpPost]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<Alumnos>> PostAlumno(Alumnos alumno)
+        public async Task<IActionResult> PostAlumnos(Alumnos alumnos)
         {
-            _context.Alumnos.Add(alumno);
+            // 1. Guardar Alumno
+            _context.Alumnos.Add(alumnos);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetAlumnos), new { id = alumno.Id }, alumno);
+
+            // 2. Generar Usuario (Nombre + Apellido)
+            string nombreCompleto = alumnos.Nombre + " " + alumnos.Apellido;
+            string nombreNormalizado = Normalizar(nombreCompleto);
+
+            // Pequeña protección: si ya existe, le añade el ID al final
+            if (await _context.Usuarios.AnyAsync(u => u.NombreUsuario == nombreNormalizado))
+            {
+                nombreNormalizado = nombreNormalizado + alumnos.Id;
+            }
+
+            // 3. Crear Usuario
+            var nuevoUsuario = new User
+            {
+                NombreUsuario = nombreNormalizado,
+                Password = BCrypt.Net.BCrypt.HashPassword("1234"),
+                Rol = "Alumno"
+            };
+
+            _context.Usuarios.Add(nuevoUsuario);
+            await _context.SaveChangesAsync();
+
+            // 4. RETORNAR CREDENCIALES
+            return Ok(new
+            {
+                mensaje = "Alumno creado con éxito",
+                alumno = alumnos,
+                credenciales = new
+                {
+                    usuario = nombreNormalizado,
+                    password = "1234"
+                }
+            });
         }
 
-        // 3. EDITAR (PUT)
+        // PUT: api/Alumnos/5
         [HttpPut("{id}")]
-        [Authorize(Roles = "!Alumno")]
-        public async Task<IActionResult> PutAlumno(int id, Alumnos alumno)
+        public async Task<IActionResult> PutAlumnos(int id, Alumnos alumnos)
         {
-            if (id != alumno.Id) return BadRequest();
-
-            _context.Entry(alumno).State = EntityState.Modified;
+            if (id != alumnos.Id) return BadRequest();
+            _context.Entry(alumnos).State = EntityState.Modified;
 
             try
             {
@@ -62,25 +88,39 @@ namespace ColegioAPI.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!_context.Alumnos.Any(e => e.Id == id)) return NotFound();
+                if (!AlumnosExists(id)) return NotFound();
                 else throw;
             }
 
             return NoContent();
         }
 
-        // 4. BORRAR (DELETE)
+        // DELETE: api/Alumnos/5
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteAlumno(int id)
+        public async Task<IActionResult> DeleteAlumnos(int id)
         {
-            var alumno = await _context.Alumnos.FindAsync(id);
-            if (alumno == null) return NotFound();
+            var alumnos = await _context.Alumnos.FindAsync(id);
+            if (alumnos == null) return NotFound();
 
-            _context.Alumnos.Remove(alumno);
+            _context.Alumnos.Remove(alumnos);
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        private bool AlumnosExists(int id)
+        {
+            return _context.Alumnos.Any(e => e.Id == id);
+        }
+
+        private string Normalizar(string texto)
+        {
+            if (string.IsNullOrEmpty(texto)) return "";
+            texto = texto.ToLowerInvariant();
+            texto = texto.Replace("á", "a").Replace("é", "e").Replace("í", "i").Replace("ó", "o").Replace("ú", "u");
+            texto = texto.Replace("Á", "a").Replace("É", "e").Replace("Í", "i").Replace("Ó", "o").Replace("Ú", "u");
+            texto = texto.Replace("ñ", "n").Replace("Ñ", "n");
+            return texto.Trim();
         }
     }
 }

@@ -1,6 +1,8 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace ColegioAPI.models
 {
-    public class Usuario
+    public class User
     {
         public int Id { get; set; }
         public string NombreUsuario { get; set; } = string.Empty;

@@ -19,6 +19,6 @@ namespace ColegioAPI.models
     {
         public string Nombre { get; set; } = string.Empty;
         public int Valor { get; set; }
-        public double ValorDecimal { get; set; }
+        public decimal ValorDecimal { get; set; }
     }
 }

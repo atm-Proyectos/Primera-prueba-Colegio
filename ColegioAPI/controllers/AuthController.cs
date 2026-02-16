@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using ColegioAPI.Data;
+using ColegioAPI.models;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using ColegioAPI.Data;   // Necesario para acceder a la BD
-using ColegioAPI.models; // Necesario para el modelo Usuario
-using Microsoft.EntityFrameworkCore; // Necesario para usar .FirstOrDefaultAsync
 
 namespace ColegioAPI.Controllers
 {
@@ -13,77 +13,141 @@ namespace ColegioAPI.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly IConfiguration _config;
-        private readonly AppDbContext _context; // Referencia a la BD
+        private readonly AppDbContext _context;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(IConfiguration config, AppDbContext context)
+        public AuthController(AppDbContext context, IConfiguration configuration)
         {
-            _config = config;
             _context = context;
+            _configuration = configuration;
         }
 
-        // POST: api/Auth/register
-        // Usaremos esto una vez para crear al usuario Admin
+        // REGISTRO
         [HttpPost("register")]
-        public async Task<IActionResult> Registrar([FromBody] Usuario usuario)
+        public async Task<ActionResult<User>> Register(UserDto request)
         {
-            // Validar si ya existe
-            /* if (await _context.Usuarios.AnyAsync(u => u.NombreUsuario == usuario.NombreUsuario))
-                 return BadRequest("El usuario ya existe."); */
+            string nombreNormalizado = Normalizar(request.Username);
 
-            // Forzamos rol user si viene vacío, o admin si quieres probar
-            if (string.IsNullOrEmpty(usuario.Rol)) usuario.Rol = "User";
-
-            _context.Usuarios.Add(usuario);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Usuario registrado con éxito" });
-        }
-
-        // POST: api/Auth/login
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest login)
-        {
-            // 1. BUSCAR EN BASE DE DATOS REAL
-            var usuario = await _context.Usuarios
-                .FirstOrDefaultAsync(u => u.NombreUsuario == login.Username && u.Password == login.Password);
-
-            // 2. Si no existe, error
-            if (usuario == null)
+            if (await _context.Usuarios.AnyAsync(u => u.NombreUsuario == nombreNormalizado))
             {
-                return Unauthorized("Usuario o contraseña incorrectos");
+                return BadRequest("El usuario ya existe.");
             }
 
-            // 3. Generar token con sus datos reales
-            var token = GenerarToken(usuario.NombreUsuario, usuario.Rol);
-            return Ok(new { token = token });
-        }
+            string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
-        private string GenerarToken(string nombreUsuario, string rol)
-        {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            var claims = new[]
+            var user = new User
             {
-                new Claim(ClaimTypes.Name, nombreUsuario),
-                new Claim(ClaimTypes.Role, rol)
+                NombreUsuario = nombreNormalizado,
+                Password = passwordHash,
+                Rol = request.Rol
             };
 
+            _context.Usuarios.Add(user);
+            await _context.SaveChangesAsync();
+
+            return Ok(user);
+        }
+
+        // LOGIN
+        [HttpPost("login")]
+        public async Task<ActionResult<string>> Login(UserDto request)
+        {
+            string nombreNormalizado = Normalizar(request.Username);
+
+            var user = await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.NombreUsuario == nombreNormalizado);
+
+            if (user == null) return Unauthorized("Usuario no encontrado.");
+
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
+            {
+                return Unauthorized("Contraseña incorrecta.");
+            }
+
+            return Ok(new { token = CrearToken(user) });
+        }
+
+        // MÉTODO PARA LIMPIEZA DE BBDD
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var user = await _context.Usuarios.FindAsync(id);
+            if (user == null)
+            {
+                return NotFound(new { mensaje = "Usuario no encontrado" });
+            }
+
+            _context.Usuarios.Remove(user);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { mensaje = $"Usuario con ID {id} borrado correctamente" });
+        }
+
+        // MÉTODO PARA BORRADO MASIVO
+        [HttpDelete("bulk-delete")]
+        public async Task<IActionResult> BulkDelete([FromBody] List<int> ids)
+        {
+            if (ids == null || !ids.Any()) return BadRequest("No has mandado ningún ID");
+
+            // Buscamos todos los usuarios cuyos IDs estén en la lista que mandamos
+            var usuariosABorrar = await _context.Usuarios
+                .Where(u => ids.Contains(u.Id))
+                .ToListAsync();
+
+            if (!usuariosABorrar.Any()) return NotFound("No se encontraron usuarios con esos IDs");
+
+            _context.Usuarios.RemoveRange(usuariosABorrar);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { mensaje = $"{usuariosABorrar.Count} usuarios borrados correctamente" });
+        }
+
+        // --- MÉTODOS PRIVADOS ---
+
+        private string CrearToken(User user)
+        {
+            List<Claim> claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.NombreUsuario),
+                new Claim(ClaimTypes.Role, user.Rol)
+            };
+
+            // Buscamos "JWT:Key" 
+            var keyString = _configuration["JWT:Key"] ?? _configuration["Jwt:Key"];
+
+            // Seguridad extra por si acaso sigue viniendo vacío
+            if (string.IsNullOrEmpty(keyString))
+            {
+                throw new Exception("¡ERROR! La clave 'JWT:Key' no se encuentra en appsettings.json");
+            }
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+
             var token = new JwtSecurityToken(
-                _config["Jwt:Issuer"],
-                _config["Jwt:Audience"],
-                claims,
-                expires: DateTime.Now.AddHours(2),
-                signingCredentials: credentials);
+                    claims: claims,
+                    expires: DateTime.Now.AddDays(1),
+                    signingCredentials: creds
+                );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+        private string Normalizar(string texto)
+        {
+            if (string.IsNullOrEmpty(texto)) return "";
+            texto = texto.ToLowerInvariant();
+            texto = texto.Replace("á", "a").Replace("é", "e").Replace("í", "i").Replace("ó", "o").Replace("ú", "u");
+            texto = texto.Replace("Á", "a").Replace("É", "e").Replace("Í", "i").Replace("Ó", "o").Replace("Ú", "u");
+            texto = texto.Replace("ñ", "n").Replace("Ñ", "n");
+            return texto.Trim();
+        }
     }
 
-    public class LoginRequest
+    public class UserDto
     {
-        public string Username { get; set; }
-        public string Password { get; set; }
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string Rol { get; set; } = "Alumno";
     }
 }

@@ -11,8 +11,9 @@
       <div class="filtros-dashboard" style="align-items: flex-start;">
 
         <div style="flex: 1;">
-          <select [(ngModel)]="formSeleccion.alumnoId" name="alumnoId" required style="width: 100%;"
-            (change)="alCambiarAlumno()" #alumnoRef="ngModel"
+          <label class="form-label">Alumno:</label>
+          <select class="form-control" [(ngModel)]="formSeleccion.alumnoId" name="alumnoId" required
+            style="width: 100%;" (change)="alCambiarAlumno()" #alumnoRef="ngModel"
             [class.input-error]="alumnoRef.invalid && (alumnoRef.dirty || alumnoRef.touched)">
 
             <option [ngValue]="null">-- Selecciona Alumno --</option>
@@ -27,33 +28,34 @@
         </div>
 
         <div style="flex: 1;">
-          <select [(ngModel)]="formSeleccion.asignaturaId" name="asignaturaId" required style="width: 100%;"
-            [disabled]="!formSeleccion.alumnoId" #asigRef="ngModel"
+          <label class="form-label">Asignatura:</label>
+          <select class="form-control" [(ngModel)]="formSeleccion.asignaturaId" name="asignaturaId" required
+            style="width: 100%;" [disabled]="listaAsignaturasDelAlumno.length === 0" #asigRef="ngModel"
             [class.input-error]="asigRef.invalid && (asigRef.dirty || asigRef.touched)">
 
-            <option [ngValue]="null">-- Asignatura --</option>
-            <option *ngFor="let m of listaAsignaturasDelAlumno" [ngValue]="m.asignaturaId">
-              {{ m.asignatura }}
+            <option [ngValue]="null">-- Selecciona Asignatura --</option>
+            <option *ngFor="let asig of listaAsignaturasDelAlumno" [ngValue]="asig.id">
+              {{ asig.nombre }}
             </option>
           </select>
 
+          <small *ngIf="formSeleccion.alumnoId && listaAsignaturasDelAlumno.length === 0" class="msg-error"
+            style="color: orange;">
+            Este alumno no tiene asignaturas contigo.
+          </small>
+
           <small *ngIf="asigRef.invalid && (asigRef.dirty || asigRef.touched)" class="msg-error">
-            <div *ngIf="asigRef.errors?.['required']">Elige una asignatura matriculada.</div>
+            <div *ngIf="asigRef.errors?.['required']">La asignatura es obligatoria.</div>
           </small>
         </div>
 
-        <div style="width: 100px;">
-          <input type="number" [(ngModel)]="valorNota" name="valor" placeholder="0-10" min="0" max="10" required
-            #notaRef="ngModel" [class.input-error]="notaRef.invalid && (notaRef.dirty || notaRef.touched)">
-
-          <small *ngIf="notaRef.invalid && (notaRef.dirty || notaRef.touched)" class="msg-error">
-            <div *ngIf="notaRef.errors?.['required']">⚠️ Obligatorio.</div>
-            <div *ngIf="notaRef.errors?.['min']">⛔ Mínimo 0.</div>
-            <div *ngIf="notaRef.errors?.['max']">⛔ Máximo 10.</div>
-          </small>
+        <div style="width: 150px;">
+          <label class="form-label">Nota:</label>
+          <input type="number" class="form-control" name="valor" [(ngModel)]="valorNota" (input)="validarNota($event)"
+            min="0" max="10" step="0.01" placeholder="0 - 10" required style="width: 100%;">
         </div>
 
-        <div>
+        <div style="display: flex; gap: 10px; align-items: flex-end; height: 100%; padding-top: 24px;">
           <button type="submit" class="btn-guardar" [disabled]="formNotas.invalid || (cargando$ | async)"
             [title]="formNotas.invalid ? 'Rellena todos los campos correctamente' : 'Guardar'">
             {{ notaIdEditar === 0 ? '💾 Guardar' : '🔄 Actualizar' }}
@@ -82,22 +84,17 @@
   </thead>
   <tbody>
     <tr *ngFor="let nota of notas$ | async">
-      <td>{{ nota.nombreAlumno }}</td>
-      <td>{{ nota.nombreAsignatura }}</td>
-
+      <td>{{ nota.nombreAlumno || nota.alumno }}</td>
+      <td>{{ nota.nombreAsignatura || nota.asignatura }}</td>
       <td>
         <span class="badge-nota" [ngClass]="nota.valor >= 5 ? 'aprobado' : 'suspenso'">
           {{ nota.valor }}
         </span>
       </td>
-
       <td *ngIf="!api.soyAlumno()" style="display: flex; gap: 5px; justify-content: center;">
         <button (click)="editar(nota)" class="btn-editar">✏️</button>
-        <button (click)="eliminar(nota.id)" class="btn-borrar">🗑️</button>
+        <button (click)="eliminar(nota.id)" class="btn-eliminar">🗑️</button>
       </td>
-    </tr>
-    <tr *ngIf="(notas$ | async)?.length === 0">
-      <td colspan="4" style="text-align:center;">No hay notas registradas.</td>
     </tr>
   </tbody>
 </table>

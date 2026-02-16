@@ -3,6 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
+export interface DatoGrafica {
+  name: string;
+  value: number;
+}
+
 export interface DashboardStats {
   totalAlumnos: number;
   totalAsignaturas: number;
@@ -31,6 +36,12 @@ export class ApiService {
   editarAsignatura(id: number, dato: any) { return this.http.put(`${this.url}/Asignaturas/${id}`, dato); }
   eliminarAsignatura(id: number) { return this.http.delete(`${this.url}/Asignaturas/${id}`); }
 
+  // --- PROFESORES ---
+  getProfesores(): Observable<any[]> { return this.http.get<any[]>(`${this.url}/Profesores`); }
+  crearProfesor(dato: any): Observable<any> { return this.http.post<any>(`${this.url}/Profesores`, dato); }
+  editarProfesor(id: number, dato: any) { return this.http.put<any>(`${this.url}/Profesores/${id}`, dato); }
+  eliminarProfesor(id: number) { return this.http.delete<any>(`${this.url}/Profesores/${id}`); }
+
   // --- NOTAS ---
   getNotas(): Observable<any[]> { return this.http.get<any[]>(`${this.url}/Notas`); }
   guardarNota(dato: any) { return this.http.post(`${this.url}/Notas`, dato); }
@@ -41,31 +52,14 @@ export class ApiService {
     return this.http.get<any[]>(`${this.url}/Notas/buscar?texto=${texto}`);
   }
 
-  // --- MATRICULAS ---
-  getMatriculas() {
-    return this.http.get<any[]>(`${this.url}/AsignaturaAlumnos`);
-  }
+  // --- MATRÍCULAS ---
+  getMatriculas(): Observable<any[]> { return this.http.get<any[]>(`${this.url}/AsignaturaAlumnos`); }
+  matricular(alumnoId: number, asignaturaId: number) { return this.http.post(`${this.url}/AsignaturaAlumnos`, { alumnoId: alumnoId, asignaturaId: asignaturaId }); }
+  eliminarMatricula(id: number) { return this.http.delete(`${this.url}/AsignaturaAlumnos/${id}`); }
+  editarMatricula(id: number, dato: any) { return this.http.put(`${this.url}/AsignaturaAlumnos/${id}`, dato); }
 
-  matricular(alumnoId: number, asignaturaId: number) {
-    const body = {
-      AlumnoId: alumnoId,
-      AsignaturaId: asignaturaId
-    };
-
-    return this.http.post(`${this.url}/AsignaturaAlumnos`, body);
-  }
-
-  eliminarMatricula(id: number) {
-    return this.http.delete(`${this.url}/AsignaturaAlumnos/${id}`);
-  }
-
-  // --- DASHBOARD ---
-  getStats() {
-    return this.http.get<DashboardStats>(`${this.url}/Stats`);
-  }
-
-  // LOGIN
-  login(credenciales: any) {
+  // --- AUTENTICACIÓN ---
+  login(credenciales: any): Observable<any> {
     return this.http.post<any>(`${this.url}/Auth/login`, credenciales).pipe(
       tap(respuesta => {
         if (respuesta && respuesta.token) {
@@ -75,53 +69,48 @@ export class ApiService {
     );
   }
 
-  // MÉTODO PARA CERRAR SESIÓN (LOGOUT)
-  logout() {
-    localStorage.removeItem('token');
-  }
+  logout() { localStorage.removeItem('token'); }
 
-  // MÉTODO PARA SABER SI ESTAMOS LOGUEADOS
-  estaLogueado(): boolean {
-    return !!localStorage.getItem('token');
-  }
+  estaLogueado(): boolean { return !!localStorage.getItem('token'); }
 
-  // Obtener rol crudo del token
   getRol(): string | null {
     const token = localStorage.getItem('token');
     if (!token) return null;
     try {
       const payload = token.split('.')[1];
       const datos = JSON.parse(atob(payload));
-      // Buscamos el rol en las claves típicas
       return datos.role || datos['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || null;
-    } catch (error) {
-      return null;
-    }
+    } catch (error) { return null; }
   }
 
-  // --- PREGUNTAS CLAVE ---
-
-  soyAdmin(): boolean {
-    return this.getRol() === 'Admin';
+  getDashboardRoute(): string {
+    const rol = this.getRol();
+    if (rol === 'Admin') return '/dashboard';
+    if (rol === 'Profesor') return '/dashboard-profesor';
+    if (rol === 'Alumno') return '/mi-perfil';
+    return '/';
   }
 
-  soyProfesor(): boolean {
-    return this.getRol() === 'Profesor';
-  }
-
-  soyAlumno(): boolean {
-    return this.getRol() === 'Alumno';
-  }
+  soyAdmin(): boolean { return this.getRol() === 'Admin'; }
+  soyProfesor(): boolean { return this.getRol() === 'Profesor'; }
+  soyAlumno(): boolean { return this.getRol() === 'Alumno'; }
 
   getUserName(): string | null {
     const token = localStorage.getItem('token');
     if (!token) return null;
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.unique_name || payload.name || 'Usuario';
-    } catch {
-      return null;
-    }
+      const payload = token.split('.')[1];
+      const datos = JSON.parse(atob(payload));
+      return datos.unique_name || datos.nameid || datos['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || null;
+    } catch (error) { return null; }
   }
 
+  // --- ESTADÍSTICAS ---
+  getStats(): Observable<DashboardStats> {
+    // Usamos any temporalmente en el get para evitar conflictos si el json viene en minúscula
+    return this.http.get<any>(`${this.url}/Stats`);
+  }
+
+  getStatsAlumno(): Observable<any> { return this.http.get<any>(`${this.url}/Stats/alumno`); }
+  getStatsProfesor(): Observable<any> { return this.http.get<any>(`${this.url}/Stats/profesor`); }
 }

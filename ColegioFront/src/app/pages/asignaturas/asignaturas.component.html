@@ -1,53 +1,23 @@
 <div class="dashboard-panel">
-    <h2>📚 Gestión de Asignaturas</h2>
 
-    <div *ngIf="mensajeError" class="alerta-error">
-        {{ mensajeError }}
-    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>📚 Gestión de Asignaturas</h2>
 
-    <form *ngIf="!api.soyAlumno()" #formAsig="ngForm" (ngSubmit)="guardar()">
-        <div class="filtros-dashboard" style="align-items: flex-start;">
-            <div style="flex: 1;">
-                <input type="text" [(ngModel)]="formAsignatura.clase" name="clase" required maxlength="100"
-                    minlength="2" pattern="^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s\.-]+$" placeholder="Nombre Asignatura (Ej. Mates)"
-                    #clase="ngModel" [class.input-error]="clase.invalid && (clase.dirty || clase.touched)"
-                    style="width: 100%;">
+        <div *ngIf="!api.soyAlumno()" style="display: flex; gap: 10px;">
+            <button class="btn-nuevo" (click)="abrirModalCrear()">
+                ➕ Añadir Asignatura
+            </button>
 
-                <small *ngIf="clase.invalid && (clase.dirty || clase.touched)" class="msg-error">
-                    <div *ngIf="clase.errors?.['required']">El nombre es obligatorio.</div>
-                    <div *ngIf="clase.errors?.['minlength']">Mínimo 2 letras.</div>
-                    <div *ngIf="clase.errors?.['pattern']">Solo letras, puntos (.) o guiones (-).</div>
-                </small>
-            </div>
-
-            <div style="flex: 1;">
-                <input type="text" [(ngModel)]="formAsignatura.profesor" name="profesor" required maxlength="50"
-                    minlength="3" pattern="^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s\.-]+$" placeholder="Profesor Asignado"
-                    #profesor="ngModel" [class.input-error]="profesor.invalid && (profesor.dirty || profesor.touched)"
-                    style="width: 100%;">
-
-                <small *ngIf="profesor.invalid && (profesor.dirty || profesor.touched)" class="msg-error">
-                    <div *ngIf="profesor.errors?.['required']">El profesor es obligatorio.</div>
-                    <div *ngIf="profesor.errors?.['minlength']">Mínimo 3 letras.</div>
-                    <div *ngIf="profesor.errors?.['pattern']">Solo letras, puntos (.) o guiones (-).</div>
-                </small>
-            </div>
-
-            <div style="display: flex; gap: 5px;">
-                <button type="submit" class="btn-guardar" [disabled]="formAsig.invalid || (cargando$ | async)"
-                    [title]="formAsig.invalid ? 'Corrige los campos en rojo' : 'Guardar'">
-                    {{ formAsignatura.id === 0 ? '💾 Crear' : '🔄 Actualizar' }}
-                </button>
-
-                <button *ngIf="formAsignatura.id !== 0" type="button" (click)="limpiar()"
-                    class="btn-cancelar">❌</button>
-            </div>
+            <button *ngIf="api.soyAdmin()" class="btn-nuevo" style="background-color: #6f42c1;"
+                (click)="abrirModalNuevoProfesor()">
+                👨‍🏫 Nuevo Profesor
+            </button>
         </div>
-    </form>
+    </div>
 
     <div *ngIf="(cargando$ | async)" class="loading-container">
         <div class="spinner"></div>
-        <p>Cargando asignaturas...</p>
+        <p>Cargando datos...</p>
     </div>
 
     <table class="tabla-datos" *ngIf="!(cargando$ | async)">
@@ -62,16 +32,63 @@
             <tr *ngFor="let asig of asignaturas$ | async">
                 <td>{{ asig.clase }}</td>
                 <td>{{ asig.profesor || '---' }}</td>
-                <td *ngIf="!api.soyAlumno()">
+                <td *ngIf="!api.soyAlumno()" style="text-align: center;">
                     <button (click)="editar(asig)" class="btn-editar">✏️</button>
-                    <button (click)="eliminar(asig.id)" class="btn-borrar">🗑️</button>
+                    <button *ngIf="api.soyAdmin()" (click)="eliminar(asig.id)" class="btn-borrar">🗑️</button>
                 </td>
             </tr>
             <tr *ngIf="(asignaturas$ | async)?.length === 0">
-                <td colspan="3" style="text-align:center; padding: 20px; color: #777;">
-                    No hay asignaturas creadas.
-                </td>
+                <td colspan="3" style="text-align: center; padding: 20px;">No hay asignaturas registradas.</td>
             </tr>
         </tbody>
     </table>
+
+    <div class="modal-overlay" *ngIf="mostrarModal">
+        <div class="modal-content animate-fade-in">
+            <h3>{{ formAsignatura.id === 0 ? 'Nueva Asignatura' : 'Editar Asignatura' }}</h3>
+
+            <form (ngSubmit)="guardar()">
+                <label>Nombre de la Clase:</label>
+                <input type="text" [(ngModel)]="formAsignatura.clase" name="clase" class="input-form"
+                    placeholder="Ej: Matemáticas" required>
+
+                <label *ngIf="api.soyAdmin()">Profesor:</label>
+                <select *ngIf="api.soyAdmin()" [(ngModel)]="formAsignatura.profesor" name="profesor" class="input-form">
+                    <option value="">-- Selecciona --</option>
+                    <option *ngFor="let prof of listaProfesores"
+                        [value]="prof.usuario || prof.nombreUsuario || prof.nombre">
+                        {{ prof.nombre }} {{ prof.apellido }} ({{ prof.usuario || prof.nombreUsuario }})
+                    </option>
+                </select>
+
+                <div class="botones-modal">
+                    <button type="button" (click)="cerrarModal()" class="btn-cancelar">Cancelar</button>
+                    <button type="submit" class="btn-guardar">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" *ngIf="mostrarModalProfesor">
+        <div class="modal-content animate-fade-in" style="border-top: 5px solid #6f42c1;">
+            <h3>👨‍🏫 Nuevo Profesor y Asignatura</h3>
+            <p class="text-muted" style="font-size: 0.9em;">Se generará usuario y contraseña automáticamente.</p>
+
+            <form (ngSubmit)="crearProfesorYAsignatura()">
+                <label>Nombre del Profesor:</label>
+                <input type="text" [(ngModel)]="formProfesor.nombre" name="nombreProf" class="input-form"
+                    placeholder="Ej: Juan Pérez" required>
+
+                <label>Asignatura a impartir:</label>
+                <input type="text" [(ngModel)]="formProfesor.asignaturaInicial" name="asigInicial" class="input-form"
+                    placeholder="Ej: Física Cuántica" required>
+
+                <div class="botones-modal">
+                    <button type="button" (click)="cerrarModalProfesor()" class="btn-cancelar">Cancelar</button>
+                    <button type="submit" class="btn-guardar" style="background-color: #6f42c1;">Crear Todo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </div>

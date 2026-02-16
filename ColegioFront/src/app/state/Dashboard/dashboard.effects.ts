@@ -12,21 +12,36 @@ export class DashboardEffects {
         ofType(DashboardActions.cargarStats),
         mergeMap(() => this.api.getStats()
             .pipe(
-                // OJO: Aquí mapeamos los datos para las gráficas si vienen crudos de la API
                 map(data => {
-                    // Adaptación de datos para ngx-charts
                     const statsFormat = {
                         totalAlumnos: data.totalAlumnos,
                         totalAsignaturas: data.totalAsignaturas,
                         edadMediaGlobal: data.edadMediaGlobal,
-                        alumnosPorAsignatura: data.alumnosPorAsignatura.map((d: any) => ({ name: d.nombre, value: d.valor })),
-                        distribucionEdades: data.distribucionEdades.map((d: any) => ({ name: d.nombre, value: d.valor })),
-                        notaMediaPorAsignatura: data.notaMediaPorAsignatura.map((d: any) => ({ name: d.nombre, value: d.valorDecimal })), // Ajusta si tu API devuelve otro nombre
-                        aprobadosVsSuspensos: data.aprobadosVsSuspensos.map((d: any) => ({ name: d.nombre, value: d.valor }))
+                        // Usamos 'nombre' y 'valor' que es lo que viene del C# ahora
+                        alumnosPorAsignatura: (data.alumnosPorAsignatura || []).map((d: any) => ({
+                            name: d.nombre,
+                            value: d.valor
+                        })),
+                        distribucionEdades: (data.distribucionEdades || []).map((d: any) => ({
+                            name: d.nombre,
+                            value: d.valor
+                        })),
+                        aprobadosVsSuspensos: (data.aprobadosVsSuspensos || []).map((d: any) => ({
+                            name: d.nombre,
+                            value: d.valor
+                        })),
+                        notaMediaPorAsignatura: (data.notaMediaPorAsignatura || []).map((d: any) => ({
+                            name: d.nombre,
+                            value: d.valor,
+                            valorDecimal: d.valorDecimal
+                        }))
                     };
                     return DashboardActions.cargarStatsSuccess({ stats: statsFormat });
                 }),
-                catchError(error => of(DashboardActions.cargarStatsFailure({ error })))
+                catchError(error => {
+                    console.error("Error en Effect Dashboard:", error);
+                    return of(DashboardActions.cargarStatsFailure({ error }))
+                })
             ))
     ));
 

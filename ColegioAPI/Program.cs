@@ -33,7 +33,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 
 
-// --- AQUÍ es donde debe ir la configuración de CORS (Antes del Build) ---
+// --- AQUÍ es donde debe ir la configuración de CORS ---
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular",

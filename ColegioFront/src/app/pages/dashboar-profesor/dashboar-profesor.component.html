@@ -1,0 +1,92 @@
+<div class="dashboard-panel">
+    <h2>👨‍🏫 Panel del Profesor</h2>
+
+    <div *ngIf="cargando" class="loading-container">
+        <div class="spinner"></div>
+        <p>Analizando datos...</p>
+    </div>
+
+    <div *ngIf="!cargando && stats" class="animate-fade-in">
+        <div class="kpi-container">
+            <div class="card-kpi blue">
+                <h3>👥 Total Alumnos</h3>
+                <p class="numero">{{ stats.totalAlumnos }}</p>
+                <small>Alumnos en tus actas</small>
+            </div>
+            <div class="card-kpi green">
+                <h3>🏆 Mejor Nota</h3>
+                <p class="numero">{{ mejorAlumno.valor }}</p>
+                <small>{{ mejorAlumno.nombre }}</small>
+            </div>
+            <div class="card-kpi red">
+                <h3>📉 Peor Nota</h3>
+                <p class="numero">{{ peorAlumno.valor }}</p>
+                <small>{{ peorAlumno.nombre }}</small>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+
+            <div class="card-dashboard alerta-destacada">
+                <div class="titulo-rojo">
+                    <h3>⚠️ Alumnos en Riesgo</h3>
+                </div>
+
+                <div *ngIf="alumnosEnRiesgo.length === 0" class="empty-state">
+                    <p>✅ Todo correcto. No hay suspensos graves.</p>
+                </div>
+                <ul *ngIf="alumnosEnRiesgo.length > 0" class="lista-riesgo">
+                    <li *ngFor="let item of alumnosEnRiesgo">
+                        <strong>{{ item.nombre }}</strong>
+                        <span class="badge-suspenso">{{ item.valor }}</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card-dashboard">
+                <h3>📊 Ratio Aprobados/Suspensos</h3>
+                <div style="height: 250px;">
+                    <ngx-charts-pie-chart [scheme]="colorSchemeRatio" [results]="ratioAprobados" [gradient]="true"
+                        [legend]="true" [labels]="true" [doughnut]="true">
+                    </ngx-charts-pie-chart>
+                </div>
+            </div>
+            <div class="card-dashboard">
+                <h3>📝 Pendientes de Calificar</h3>
+
+                <div *ngIf="alumnosPendientes.length === 0" class="empty-state">
+                    <p>🎉 ¡Todo corregido!</p>
+                </div>
+                <ul class="lista-simple" *ngIf="alumnosPendientes.length > 0">
+                    <li *ngFor="let p of alumnosPendientes">
+                        <span>{{ p.nombre }}</span>
+                        <small style="color: #666;">({{ p.asignatura }})</small>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="dashboard-grid" style="margin-top: 20px;">
+
+            <div class="card-dashboard">
+                <h3>📊 Progreso Corrección</h3>
+                <div style="height: 250px;">
+                    <ngx-charts-pie-chart [scheme]="colorSchemeTarta" [results]="progresoCorreccion" [gradient]="true"
+                        [legend]="true" [labels]="false" [doughnut]="true">
+                    </ngx-charts-pie-chart>
+                </div>
+            </div>
+
+            <div class="card-dashboard">
+                <h3>📘 Alumnos por Clase</h3>
+                <div style="height: 250px;">
+                    <ngx-charts-bar-vertical [scheme]="colorScheme" [results]="stats.alumnosPorAsignatura"
+                        [xAxis]="true" [yAxis]="true" [showXAxisLabel]="true" xAxisLabel="Asignatura"
+                        yAxisLabel="Cant.">
+                    </ngx-charts-bar-vertical>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

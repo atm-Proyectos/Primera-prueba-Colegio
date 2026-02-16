@@ -20,6 +20,10 @@ export class NavbarComponent {
     return this.api.getRol() || '';
   }
 
+  getDashboardRoute(): string {
+    return this.api.getDashboardRoute();
+  }
+
   salir() {
     this.api.logout(); // Borra el token
     this.router.navigate(['/login']); // Nos manda al login

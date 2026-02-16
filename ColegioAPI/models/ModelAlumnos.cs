@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace ColegioAPI.models
 {
@@ -15,8 +16,13 @@ namespace ColegioAPI.models
         [MaxLength(50, ErrorMessage = "El apellido debe tener menos de 50 caracteres")]
         [MinLength(2, ErrorMessage = "El apellido debe tener al menos 2 caracteres")]
         public string Apellido { get; set; } = string.Empty;
+
         [Required(ErrorMessage = "La edad es obligatoria")]
         [Range(3, 19, ErrorMessage = "La edad debe estar entre 3 y 19")]
         public int Edad { get; set; }
+
+        // Relación
+        [JsonIgnore]
+        public List<AsignaturaAlumno>? AsignaturaAlumnos { get; set; }
     }
 }

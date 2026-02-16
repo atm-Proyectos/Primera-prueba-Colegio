@@ -1,0 +1,40 @@
+<div class="dashboard-panel">
+    <h2>🎓 Mi Perfil: {{ nombreUsuario }}</h2>
+
+    <div *ngIf="cargando" class="loading-container">
+        <div class="spinner"></div>
+        <p>Calculando tus notas...</p>
+    </div>
+
+    <div *ngIf="!cargando && !stats" class="alerta-info">
+        <h3>👋 ¡Hola!</h3>
+        <p>Aún no tienes notas registradas en el sistema.</p>
+    </div>
+
+    <div *ngIf="!cargando && stats" class="animate-fade-in">
+
+        <div class="kpi-container">
+            <div class="card-kpi blue">
+                <h3>⭐ Promedio</h3>
+                <p class="numero">{{ stats.promedioGlobal }}</p>
+            </div>
+            <div class="card-kpi purple">
+                <h3>📚 Asignaturas</h3>
+                <p class="numero">{{ stats.totalAsignaturas }}</p>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="chart-section">
+            <h3>📊 Evolución de Notas</h3>
+            <div class="chart-container">
+                <ngx-charts-bar-vertical [view]="view" [scheme]="colorScheme" [results]="stats.graficaNotas"
+                    [gradient]="gradient" [xAxis]="showXAxis" [yAxis]="showYAxis" [legend]="showLegend"
+                    [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxisLabel]="xAxisLabel"
+                    [yAxisLabel]="yAxisLabel">
+                </ngx-charts-bar-vertical>
+            </div>
+        </div>
+    </div>
+</div>

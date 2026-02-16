@@ -13,6 +13,7 @@ namespace ColegioAPI.Data
         public DbSet<Asignaturas> Asignaturas { get; set; }
         public DbSet<AsignaturaAlumno> Asignatura_Alumnos { get; set; }
         public DbSet<Notas> Notas { get; set; }
-        public DbSet<Usuario> Usuarios { get; set; }
+        public DbSet<User> Usuarios { get; set; }
+        public DbSet<Profesores> Profesores { get; set; }
     }
 }

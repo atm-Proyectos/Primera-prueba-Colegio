@@ -14,7 +14,8 @@
         <button routerLink="/alumnos" routerLinkActive="active">👥 Alumnos</button>
         <button routerLink="/asignaturas" routerLinkActive="active">📚 Asignaturas</button>
         <button routerLink="/notas" routerLinkActive="active">📝 Notas</button>
-        <button *ngIf="!api.soyAlumno()" routerLink="/dashboard" routerLinkActive="active">📊 Dashboard</button>
+        <button *ngIf="!api.soyAlumno()" [routerLink]="getDashboardRoute()" routerLinkActive="active">📊
+            Dashboard</button>
 
 
         <div style="margin-left: auto; display: flex; gap: 10px;">
