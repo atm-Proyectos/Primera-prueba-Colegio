@@ -24,28 +24,53 @@ namespace ColegioAPI.Controllers
 
         // GET: api/Asignaturas
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Asignaturas>>> GetAsignaturas()
+        public async Task<ActionResult<IEnumerable<AsignaturaDTO>>> GetAsignaturas()
         {
-            var usuario = User.Identity?.Name;
             var esProfesor = User.IsInRole("Profesor");
+            var usuarioToken = User.Identity?.Name ?? "";
+            var esAlumno = User.IsInRole("Alumno");
+            int? alumnoId = null;
 
-            IQueryable<Asignaturas> query = _context.Asignaturas;
-
-            if (esProfesor)
+            if (esAlumno && !string.IsNullOrEmpty(usuarioToken))
             {
-                return await _context.Asignaturas
-                    .Where(a => EF.Functions.ILike(a.Profesor, usuario))
-                    .ToListAsync();
+                var listaAlumnos = await _context.Alumnos.ToListAsync();
 
+                var miAlumno = listaAlumnos.FirstOrDefault(a =>
+                    Normalizar($"{a.Nombre} {a.Apellido}") == Normalizar(usuarioToken)
+                );
+                if (miAlumno != null) alumnoId = miAlumno.Id;
             }
-            // Admin y Alumnos ven todas (o ajusta según tu lógica de lectura)
-            return await _context.Asignaturas.ToListAsync();
+            // Cargamos asignaturas incluyendo explícitamente las matrículas
+            var query = _context.Asignaturas
+                .Include(a => a.AsignaturaAlumnos)
+                .AsQueryable();
 
+            // Filtro para profesores
+            if (User.IsInRole("Profesor"))
+            {
+                query = query.Where(a => a.Profesor != null &&
+                                         EF.Functions.ILike(a.Profesor, usuarioToken));
+            }
+
+            var resultados = await query.ToListAsync();
+
+            return Ok(resultados.Select(a => new AsignaturaDTO
+            {
+                Id = a.Id,
+                Clase = a.Clase ?? "Sin nombre",
+                Profesor = a.Profesor ?? "Sin asignar",
+                // Buscamos si el ID del alumno está en la lista de matrículas de esta asignatura
+                MatriculaId = alumnoId.HasValue
+                    ? a.AsignaturaAlumnos?
+                        .FirstOrDefault(m => m.AlumnoId == alumnoId.Value)?.Id
+                    : null
+            }));
         }
+
 
         // POST: Crear Asignatura
         [HttpPost]
-        [Authorize(Roles = "Admin,Profesor")] // <--- PERMITIMOS AMBOS ROLES
+        [Authorize(Roles = "Admin,Profesor")]
         public async Task<IActionResult> PostAsignatura(Asignaturas asignatura)
         {
             // SEGURIDAD: Si es Profesor, forzamos que se la asigne a sí mismo
@@ -72,7 +97,7 @@ namespace ColegioAPI.Controllers
 
         // PUT: Editar Asignatura
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Profesor")]
+        [Authorize(Roles = "Admin,Profesor,Alumno")]
         public async Task<IActionResult> PutAsignatura(int id, Asignaturas asignatura)
         {
             if (id != asignatura.Id) return BadRequest();
@@ -119,8 +144,20 @@ namespace ColegioAPI.Controllers
         private string Normalizar(string texto)
         {
             if (string.IsNullOrEmpty(texto)) return "";
-            // Normalización simple para evitar espacios raros
-            return texto.Trim();
+
+            var normalizedString = texto.Normalize(System.Text.NormalizationForm.FormD);
+            var stringBuilder = new System.Text.StringBuilder();
+
+            foreach (var c in normalizedString)
+            {
+                if (System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+                {
+                    stringBuilder.Append(c);
+                }
+            }
+
+            return stringBuilder.ToString().Normalize(System.Text.NormalizationForm.FormC)
+                .ToLower().Replace(" ", "").Trim();
         }
     }
 }

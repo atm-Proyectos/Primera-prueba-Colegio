@@ -20,7 +20,7 @@ namespace ColegioAPI.Controllers
             _context = context;
         }
 
-        // GET: Ver todas las matrículas (Filtradas para Profesor y Alumno)
+        // GET: Ver todas las matrículas
         [HttpGet]
         [Authorize]
         public async Task<ActionResult<IEnumerable<object>>> GetMatriculas()
@@ -74,7 +74,7 @@ namespace ColegioAPI.Controllers
 
         // POST: Matricular
         [HttpPost]
-        [Authorize(Roles = "Admin,Profesor")]
+        [Authorize(Roles = "Admin,Profesor,Alumno")]
         public async Task<ActionResult<object>> Matricular(MatriculaDTO datos)
         {
             if (datos.AlumnoId <= 0 || datos.AsignaturaId <= 0)
@@ -101,7 +101,7 @@ namespace ColegioAPI.Controllers
 
         // DELETE: Desmatricular
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin,Profesor")]
+        [Authorize(Roles = "Admin,Profesor, Alumno")]
         public async Task<IActionResult> Desmatricular(int id)
         {
             var matricula = await _context.Asignatura_Alumnos.FindAsync(id);

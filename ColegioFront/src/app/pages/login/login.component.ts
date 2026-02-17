@@ -31,7 +31,7 @@ export class LoginComponent {
         } else if (rol === 'Profesor') {
           this.router.navigate(['/inicio']);
         } else if (rol === 'Alumno') {
-          this.router.navigate(['/inicio']);
+          this.router.navigate(['/perfil-alumno']);
         }
       },
       error: (err: any) => {

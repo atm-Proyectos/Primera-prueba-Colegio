@@ -88,8 +88,22 @@ namespace ColegioAPI.Controllers
             }
             else if (esAlumno)
             {
-                // Solo notas donde el alumno sea EL
-                query = query.Where(n => EF.Functions.ILike(n.AsignaturaAlumno.Alumno.Nombre, usuario));
+                // 1. Traemos los datos necesarios a una lista primero
+                var todasLasNotas = await query.ToListAsync();
+
+                // 2. Filtramos en memoria usando la función Normalizar
+                var notasFiltradas = todasLasNotas
+                    .Where(n => Normalizar($"{n.AsignaturaAlumno?.Alumno?.Nombre} {n.AsignaturaAlumno?.Alumno?.Apellido}") == usuario)
+                    .Select(n => new
+                    {
+                        Id = n.Id,
+                        Valor = n.Valor,
+                        NombreAlumno = n.AsignaturaAlumno?.Alumno?.Nombre + " " + n.AsignaturaAlumno?.Alumno?.Apellido,
+                        NombreAsignatura = n.AsignaturaAlumno?.Asignatura?.Clase,
+                        AsignaturaAlumnoId = n.AsignaturaAlumnoId
+                    }).ToList();
+
+                return Ok(notasFiltradas);
             }
 
             // Proyección de datos (Select)
@@ -169,6 +183,24 @@ namespace ColegioAPI.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+        private string Normalizar(string texto)
+        {
+            if (string.IsNullOrEmpty(texto)) return "";
+
+            var normalizedString = texto.Normalize(System.Text.NormalizationForm.FormD);
+            var stringBuilder = new System.Text.StringBuilder();
+
+            foreach (var c in normalizedString)
+            {
+                if (System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+                {
+                    stringBuilder.Append(c);
+                }
+            }
+
+            return stringBuilder.ToString().Normalize(System.Text.NormalizationForm.FormC)
+                .ToLower().Replace(" ", "").Trim();
         }
     }
 }

@@ -10,12 +10,11 @@
                 {{ rolUsuario }}
             </span>
         </div>
-        <button routerLink="/inicio" routerLinkActive="active">🏠 Inicio</button>
-        <button routerLink="/alumnos" routerLinkActive="active">👥 Alumnos</button>
+        <button *ngIf="!api.soyAlumno()" routerLink="/inicio" routerLinkActive="active">🏠 Inicio</button>
+        <button *ngIf="!api.soyAlumno()" routerLink="/alumnos" routerLinkActive="active">👥 Alumnos</button>
         <button routerLink="/asignaturas" routerLinkActive="active">📚 Asignaturas</button>
         <button routerLink="/notas" routerLinkActive="active">📝 Notas</button>
-        <button *ngIf="!api.soyAlumno()" [routerLink]="getDashboardRoute()" routerLinkActive="active">📊
-            Dashboard</button>
+        <button [routerLink]="getDashboardRoute()" routerLinkActive="active">📊 Dashboard</button>
 
 
         <div style="margin-left: auto; display: flex; gap: 10px;">

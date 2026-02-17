@@ -29,51 +29,75 @@ namespace ColegioAPI.Controllers
         public async Task<ActionResult<object>> GetStatsAlumno()
         {
             var nombreUsuarioRaw = User.Identity?.Name ?? "";
-
-            if (string.IsNullOrEmpty(nombreUsuarioRaw))
-                return BadRequest("Usuario no identificado");
-
             var todosAlumnos = await _context.Alumnos
                 .Include(a => a.AsignaturaAlumnos!)
-                .ThenInclude(aa => aa.Asignatura)
+                    .ThenInclude(aa => aa.Asignatura)
+                .Include(a => a.AsignaturaAlumnos!)
+                    .ThenInclude(aa => aa.Notas)
                 .ToListAsync();
 
-            // Filtro en memoria para evitar problemas de mayúsculas/minúsculas
             var alumno = todosAlumnos.FirstOrDefault(a =>
-                (a.Nombre + " " + a.Apellido).Replace(" ", "").ToLower() == nombreUsuarioRaw.Replace(" ", "").ToLower() ||
-                a.Nombre.ToLower() == nombreUsuarioRaw.ToLower()
-            );
-
-            if (alumno == null)
-            {
-                // Intento de respaldo: Buscar el primero si es demo
-                alumno = todosAlumnos.FirstOrDefault();
-            }
+                Normalizar($"{a.Nombre} {a.Apellido}") == Normalizar(nombreUsuarioRaw));
 
             if (alumno == null) return NotFound("Alumno no encontrado");
 
-            // Calcular notas del alumno
-            var misMatriculasIds = alumno.AsignaturaAlumnos.Select(aa => aa.Id).ToList();
-            var misNotas = await _context.Notas
-                .Where(n => misMatriculasIds.Contains(n.AsignaturaAlumnoId))
-                .ToListAsync();
+            // Separamos las asignaturas por estado
+            var matriculasConNota = alumno.AsignaturaAlumnos!
+                .Where(aa => aa.Notas != null).ToList();
 
-            var stats = new
+            var aprobadas = matriculasConNota.Count(aa => aa.Notas!.Valor >= 5);
+            var suspensas = matriculasConNota.Count(aa => aa.Notas!.Valor < 5);
+            var sinCalificar = alumno.AsignaturaAlumnos!.Count - matriculasConNota.Count;
+
+            return Ok(new
             {
-                TotalAsignaturas = alumno.AsignaturaAlumnos.Count,
-                NotaMedia = misNotas.Any() ? Math.Round(misNotas.Average(n => n.Valor), 2) : 0,
-                AsignaturasAprobadas = misNotas.Where(n => n.Valor >= 5).Select(n => n.AsignaturaAlumnoId).Distinct().Count(),
+                totalAsignaturas = alumno.AsignaturaAlumnos!.Count,
+                promedioGlobal = matriculasConNota.Any()
+                    ? Math.Round(matriculasConNota.Average(aa => (double)aa.Notas!.Valor), 2)
+                    : 0,
+                aprobadas,
+                suspensas,
+                sinCalificar,
+                // Datos para la tarta 🥧
+                statsTarta = new[] {
+            new { name = "Aprobadas", value = aprobadas },
+            new { name = "Suspensas", value = suspensas },
+            new { name = "Sin Calificar", value = sinCalificar }
+        },
 
-                // Gráfica de evolución
-                EvolucionNotas = misNotas.Select(n => new
+                // Datos para las barras 📊
+                graficaNotas = matriculasConNota.Select(aa => new
                 {
-                    name = n.AsignaturaAlumno?.Asignatura?.Clase ?? "Asignatura",
-                    value = n.Valor
+                    name = aa.Asignatura?.Clase ?? "Asignatura",
+                    value = aa.Notas!.Valor
+                }),
+                // Lista de asignaturas matriculadas
+                asignaturas = alumno.AsignaturaAlumnos.Select(aa => new
+                {
+                    nombre = aa.Asignatura?.Clase,
+                    profesor = aa.Asignatura?.Profesor
                 })
-            };
-
-            return Ok(stats);
+            });
         }
+        private string Normalizar(string texto)
+        {
+            if (string.IsNullOrEmpty(texto)) return "";
+
+            var normalizedString = texto.Normalize(System.Text.NormalizationForm.FormD);
+            var stringBuilder = new System.Text.StringBuilder();
+
+            foreach (var c in normalizedString)
+            {
+                if (System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+                {
+                    stringBuilder.Append(c);
+                }
+            }
+
+            return stringBuilder.ToString().Normalize(System.Text.NormalizationForm.FormC)
+                .ToLower().Replace(" ", "").Trim();
+        }
+
 
         // ==========================================
         // 2. ROL PROFESOR: DASHBOARD ESPECÍFICO
@@ -271,6 +295,7 @@ namespace ColegioAPI.Controllers
         public List<DatoGrafica> DistribucionEdades { get; set; } = new List<DatoGrafica>();
         public List<DatoGrafica> NotaMediaPorAsignatura { get; set; } = new List<DatoGrafica>();
         public List<DatoGrafica> AprobadosVsSuspensos { get; set; } = new List<DatoGrafica>();
+        public List<DatoGrafica> AsignaturasMatriculadas { get; set; } = new List<DatoGrafica>();
     }
 
     public class DatoGrafica
@@ -278,5 +303,6 @@ namespace ColegioAPI.Controllers
         public string nombre { get; set; }
         public int valor { get; set; }
         public decimal ValorDecimal { get; set; }
+        public string Asignatura { get; set; } = string.Empty;
     }
 }

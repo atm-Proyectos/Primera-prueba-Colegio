@@ -36,87 +36,169 @@ export class AsignaturasComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Carga inicial de datos
     this.store.dispatch(cargarAsignaturas());
-    if (this.api.soyAdmin()) {
-      this.cargarListaProfesores();
-    }
+    this.cargarListaProfesores();
   }
 
   cargarListaProfesores() {
-    this.api.getProfesores().subscribe({
-      next: (data: any) => this.listaProfesores = data,
-      error: () => console.error("Error cargando profesores")
+    this.api.getProfesores().subscribe(data => {
+      this.listaProfesores = data;
     });
   }
 
-  // --- LÓGICA MODAL ASIGNATURA (Profesor ya existente) ---
+  // ==========================================
+  // LÓGICA DE ALUMNO (Botón Inteligente)
+  // ==========================================
+
+  matricularse(asignatura: any) {
+    const usuario = this.api.getUserName();
+
+    this.api.getAlumnos().subscribe(todos => {
+      // 👇 TRUCO: Función para limpiar tildes y espacios
+      const limpiar = (texto: string) =>
+        texto?.toLowerCase()
+          .normalize("NFD") // Descompone "ó" en "o" + "´"
+          .replace(/[\u0300-\u036f]/g, "") // Borra los simbolitos de acentos
+          .replace(/\s/g, ""); // Borra espacios
+
+      const miUsuarioLimpio = limpiar(usuario || '');
+
+      const yo = todos.find((a: any) => {
+        const nombreCompletoBD = limpiar(a.nombre + ' ' + a.apellido);
+        // Debug opcional para ver que ahora sí coinciden
+        // console.log(`Comparando: ${miUsuarioLimpio} vs ${nombreCompletoBD}`); 
+        return nombreCompletoBD === miUsuarioLimpio;
+      });
+
+      if (yo) {
+        this.api.matricular(yo.id, asignatura.id).subscribe({
+          next: () => {
+            Swal.fire({
+              title: '¡Apuntado!',
+              text: `Te has matriculado en ${asignatura.clase}`,
+              icon: 'success',
+              timer: 2000,
+              showConfirmButton: false
+            });
+            this.store.dispatch(cargarAsignaturas());
+          },
+          error: (err) => {
+            // 🔍 Aquí capturamos el mensaje del Backend
+            // Si el backend envía un objeto con 'mensaje', lo usamos. Si no, ponemos uno por defecto.
+            const mensajeDelServidor = err.error?.mensaje || "No se pudo realizar la matrícula";
+
+            Swal.fire({
+              title: 'Atención',
+              text: mensajeDelServidor,
+              icon: 'warning',
+              confirmButtonColor: '#3498db'
+            });
+
+            console.error("Detalle del error:", err);
+          }
+        });
+      } else {
+        Swal.fire('Error', 'No pude encontrar tu perfil de alumno. Revisa que tu nombre coincida.', 'error');
+        console.warn("Usuario del token no encontrado en lista de alumnos:", miUsuarioLimpio);
+      }
+    });
+  }
+
+  desmatricularse(asignatura: any) {
+    if (!asignatura.matriculaId) return;
+
+    Swal.fire({
+      title: '¿Darte de baja?',
+      text: `Saldrás de la clase de ${asignatura.clase}`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#e74c3c',
+      confirmButtonText: 'Sí, salir',
+      cancelButtonText: 'Cancelar'
+    }).then((res) => {
+      if (res.isConfirmed) {
+        // Usamos el ID de la matrícula que nos dio el Backend en el DTO
+        this.api.eliminarMatricula(asignatura.matriculaId).subscribe({
+          next: () => {
+            Swal.fire('Hecho', 'Te has desmatriculado correctamente', 'success');
+            // Recargamos la tabla para que el botón vuelva a ser VERDE
+            this.store.dispatch(cargarAsignaturas());
+          },
+          error: (err) => {
+            // 🔍 Aquí capturamos el mensaje del Backend
+            // Si el backend envía un objeto con 'mensaje', lo usamos. Si no, ponemos uno por defecto.
+            const mensajeDelServidor = err.error?.mensaje || "No se pudo desmatricular";
+
+            Swal.fire({
+              title: 'Atención',
+              text: mensajeDelServidor,
+              icon: 'warning',
+              confirmButtonColor: '#3498db'
+            });
+
+            console.error("Detalle del error:", err);
+          }
+        });
+      }
+    });
+  }
+
+  // ==========================================
+  // LÓGICA DE ADMIN (CRUD Asignaturas)
+  // ==========================================
+
   abrirModalCrear() {
-    this.limpiar();
+    this.formAsignatura = { id: 0, clase: "", profesor: "" };
+    this.mostrarModal = true;
+  }
+
+  editar(asig: any) {
+    this.formAsignatura = { ...asig };
     this.mostrarModal = true;
   }
 
   cerrarModal() {
     this.mostrarModal = false;
-    this.mensajeError = "";
   }
 
   guardar() {
     if (this.formAsignatura.id === 0) {
-      this.api.guardarAsignatura(this.formAsignatura).subscribe({
-        next: () => {
-          Swal.fire('Creada', 'Asignatura añadida correctamente', 'success');
-          this.store.dispatch(cargarAsignaturas());
-          this.cerrarModal();
-        },
-        error: (err: any) => Swal.fire('Error', this.traducirError(err), 'error')
+      this.api.guardarAsignatura(this.formAsignatura).subscribe(() => {
+        this.cerrarModal();
+        this.store.dispatch(cargarAsignaturas());
+        Swal.fire('Creado', 'Asignatura creada con éxito', 'success');
       });
     } else {
-      this.api.editarAsignatura(this.formAsignatura.id, this.formAsignatura).subscribe({
-        next: () => {
-          Swal.fire('Actualizada', 'Datos modificados', 'success');
-          this.store.dispatch(cargarAsignaturas());
-          this.cerrarModal();
-        },
-        error: (err: any) => Swal.fire('Error', this.traducirError(err), 'error')
+      this.api.editarAsignatura(this.formAsignatura.id, this.formAsignatura).subscribe(() => {
+        this.cerrarModal();
+        this.store.dispatch(cargarAsignaturas());
+        Swal.fire('Actualizado', 'Asignatura editada con éxito', 'success');
       });
     }
   }
 
-  editar(item: any) {
-    this.formAsignatura = { ...item };
-    this.mostrarModal = true;
-  }
-
   eliminar(id: number) {
     Swal.fire({
-      title: '¿Borrar asignatura?',
-      text: "Se borrarán las matrículas asociadas.",
+      title: '¿Estás seguro?',
+      text: "Se borrará la asignatura permanentemente",
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
       confirmButtonText: 'Sí, borrar'
     }).then((result) => {
       if (result.isConfirmed) {
-        this.api.eliminarAsignatura(id).subscribe({
-          next: () => {
-            Swal.fire('Borrada', 'Asignatura eliminada.', 'success');
-            this.store.dispatch(cargarAsignaturas());
-          },
-          error: (err: any) => Swal.fire('Error', this.traducirError(err), 'error')
-        })
+        this.api.eliminarAsignatura(id).subscribe(() => {
+          this.store.dispatch(cargarAsignaturas());
+          Swal.fire('Borrado', 'La asignatura ha sido eliminada.', 'success');
+        });
       }
     });
   }
 
-  limpiar() {
-    this.formAsignatura = { id: 0, clase: "", profesor: "" };
-  }
-
-  traducirError(err: any): string {
-    return err?.error || err?.message || "Ocurrió un error inesperado.";
-  }
-
-  // --- NUEVA LÓGICA: CREAR PROFESOR Y ASIGNATURA (TODO EN UNO) ---
+  // ==========================================
+  // LÓGICA DE ADMIN
+  // ==========================================
 
   abrirModalNuevoProfesor() {
     this.formProfesor = { nombre: "", asignaturaInicial: "" };
@@ -128,13 +210,11 @@ export class AsignaturasComponent implements OnInit {
   }
 
   crearProfesorYAsignatura() {
-    // 1. Validar
     if (!this.formProfesor.nombre || !this.formProfesor.asignaturaInicial) {
       Swal.fire('Atención', 'Nombre y Asignatura son obligatorios', 'warning');
       return;
     }
 
-    // 2. Enviar al Backend (que ahora hace TODO el trabajo)
     const datosEnvio = {
       nombre: this.formProfesor.nombre,
       asignaturaInicial: this.formProfesor.asignaturaInicial
@@ -142,13 +222,8 @@ export class AsignaturasComponent implements OnInit {
 
     this.api.crearProfesor(datosEnvio).subscribe({
       next: (resp: any) => {
-        // Al volver, el backend ya creó todo. Solo notificamos.
-
         this.cerrarModalProfesor();
-
-        // Refrescamos la tabla de asignaturas
         this.store.dispatch(cargarAsignaturas());
-        // Refrescamos el select de profesores
         this.cargarListaProfesores();
 
         Swal.fire({
@@ -164,9 +239,9 @@ export class AsignaturasComponent implements OnInit {
           icon: 'success'
         });
       },
-      error: (err: any) => {
+      error: (err) => {
         console.error(err);
-        Swal.fire('Error', 'No se pudo crear el profesor: ' + this.traducirError(err), 'error');
+        Swal.fire('Error', 'No se pudo crear el profesor', 'error');
       }
     });
   }

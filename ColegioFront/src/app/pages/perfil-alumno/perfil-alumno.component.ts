@@ -13,8 +13,16 @@ export class PerfilAlumnoComponent implements OnInit {
   cargando: boolean = true;
   nombreUsuario: string = '';
 
+  // Variables específicas para los KPIs
+  promedioGeneral: number = 0;
+  totalAsignaturas: number = 0;
+  ratioAprobados: any[] = [];
+  aprobadas: number = 0;
+  suspensas: number = 0;
+  asignaturas: any[] = [];
+
   // Configuración de la Gráfica
-  view: [number, number] = [700, 400];
+  view: [number, number] = [undefined as any, 250];
   showXAxis = true;
   showYAxis = true;
   gradient = false;
@@ -24,11 +32,26 @@ export class PerfilAlumnoComponent implements OnInit {
   showYAxisLabel = true;
   yAxisLabel = 'Nota (0-10)';
 
+  // Esquemas de Colores
   colorScheme: Color = {
-    name: 'custom',
+    name: 'alumnoScheme',
     selectable: true,
     group: ScaleType.Ordinal,
-    domain: ['#5AA454', '#A10A28', '#C7B42C', '#AAAAAA']
+    domain: ['#ff9f43', '#ee5253', '#0abde3', '#10ac84']
+  };
+
+  colorSchemeTarta: Color = {
+    name: 'tartaScheme',
+    selectable: true,
+    group: ScaleType.Ordinal,
+    domain: ['#66bb6a', '#e0e0e0']
+  };
+
+  colorSchemeRatio: Color = {
+    name: 'card-dashboard',
+    selectable: true,
+    group: ScaleType.Ordinal,
+    domain: ['#2ecc71', '#e74c3c', '#95a5a6']
   };
 
   constructor(private api: ApiService) { }
@@ -42,10 +65,14 @@ export class PerfilAlumnoComponent implements OnInit {
     this.api.getStatsAlumno().subscribe({
       next: (data) => {
         this.stats = data;
+        // Aquí asignamos la lista que viene del C#
+        this.asignaturas = data.asignaturas;
+        // Y los datos para la tarta
+        this.ratioAprobados = data.statsTarta;
         this.cargando = false;
       },
       error: (err) => {
-        console.error("Error cargando perfil", err);
+        console.error("Error al cargar dashboard", err);
         this.cargando = false;
       }
     });

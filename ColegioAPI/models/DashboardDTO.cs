@@ -13,6 +13,9 @@ namespace ColegioAPI.models
 
         public List<DatoGrafica> NotaMediaPorAsignatura { get; set; } = new List<DatoGrafica>();
         public List<DatoGrafica> AprobadosVsSuspensos { get; set; } = new List<DatoGrafica>();
+        public List<DatoGrafica> AsignaturasMatriculadas { get; set; } = new List<DatoGrafica>();
+
+
     }
 
     public class DatoGrafica
@@ -20,5 +23,7 @@ namespace ColegioAPI.models
         public string Nombre { get; set; } = string.Empty;
         public int Valor { get; set; }
         public decimal ValorDecimal { get; set; }
+        public string Asignatura { get; set; } = string.Empty;
+
     }
 }

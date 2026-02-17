@@ -24,6 +24,14 @@
     background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);
 }
 
+.card-kpi.green {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.card-kpi.red {
+    background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+}
+
 .numero {
     font-size: 3em;
     font-weight: bold;

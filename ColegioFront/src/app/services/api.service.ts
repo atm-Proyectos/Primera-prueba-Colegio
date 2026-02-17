@@ -87,7 +87,7 @@ export class ApiService {
     const rol = this.getRol();
     if (rol === 'Admin') return '/dashboard';
     if (rol === 'Profesor') return '/dashboard-profesor';
-    if (rol === 'Alumno') return '/mi-perfil';
+    if (rol === 'Alumno') return '/perfil-alumno';
     return '/';
   }
 

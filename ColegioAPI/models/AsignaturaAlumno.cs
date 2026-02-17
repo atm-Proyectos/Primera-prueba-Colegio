@@ -17,8 +17,9 @@ namespace ColegioAPI.models
         [ForeignKey("AsignaturaId")]
         public Asignaturas? Asignatura { get; set; }
 
-        public int AñoEscolar { get; set; }
+        public Notas? Notas { get; set; }
 
+        public int AñoEscolar { get; set; }
         public DateTime FechaMatricula { get; set; }
     }
 }

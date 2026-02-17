@@ -6,16 +6,21 @@
         <p>Calculando tus notas...</p>
     </div>
 
-    <div *ngIf="!cargando && !stats" class="alerta-info">
-        <h3>👋 ¡Hola!</h3>
-        <p>Aún no tienes notas registradas en el sistema.</p>
-    </div>
 
     <div *ngIf="!cargando && stats" class="animate-fade-in">
-
         <div class="kpi-container">
+            <div class="card-kpi green">
+                <h3>🏆 Aprobadas</h3>
+                <p class="numero">{{ stats.aprobadas }}</p>
+            </div>
+            <div class="card-kpi red">
+                <h3>🏆 Suspensas</h3>
+                <p class="numero">{{ stats.suspensas }}</p>
+            </div>
+
+
             <div class="card-kpi blue">
-                <h3>⭐ Promedio</h3>
+                <h3>⭐ Nota Media</h3>
                 <p class="numero">{{ stats.promedioGlobal }}</p>
             </div>
             <div class="card-kpi purple">
@@ -27,7 +32,7 @@
         <hr>
 
         <div class="chart-section">
-            <h3>📊 Evolución de Notas</h3>
+            <h3>📊 Notas por Asignatura</h3>
             <div class="chart-container">
                 <ngx-charts-bar-vertical [view]="view" [scheme]="colorScheme" [results]="stats.graficaNotas"
                     [gradient]="gradient" [xAxis]="showXAxis" [yAxis]="showYAxis" [legend]="showLegend"
@@ -35,6 +40,27 @@
                     [yAxisLabel]="yAxisLabel">
                 </ngx-charts-bar-vertical>
             </div>
+        </div>
+        <div class="card-dashboard">
+            <h3>📊 Aprobadas, Suspensas, sin calificar</h3>
+            <div style="height: 250px;">
+                <ngx-charts-pie-chart [scheme]="colorSchemeRatio" [results]="ratioAprobados" [gradient]="true"
+                    [legend]="true" [labels]="false" [doughnut]="true">
+                </ngx-charts-pie-chart>
+            </div>
+        </div>
+        <div class="card-dashboard">
+            <h3>📝 Asignaturas Matriculadas</h3>
+
+            <div *ngIf="asignaturas.length === 0" class="empty-state">
+                <p>🎉 ¡Todo corregido!</p>
+            </div>
+            <ul class="lista-simple" *ngIf="asignaturas.length > 0">
+                <li *ngFor="let p of asignaturas">
+                    <span>{{ p.nombre }}</span>
+                    <small style="color: #666;">({{ p.asignatura }})</small>
+                </li>
+            </ul>
         </div>
     </div>
 </div>

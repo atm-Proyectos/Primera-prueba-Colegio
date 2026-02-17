@@ -8,8 +8,7 @@
                 ➕ Añadir Asignatura
             </button>
 
-            <button *ngIf="api.soyAdmin()" class="btn-nuevo" style="background-color: #6f42c1;"
-                (click)="abrirModalNuevoProfesor()">
+            <button *ngIf="api.soyAdmin()" class="btn-profesor" (click)="abrirModalNuevoProfesor()">
                 👨‍🏫 Nuevo Profesor
             </button>
         </div>
@@ -25,20 +24,36 @@
             <tr>
                 <th>Asignatura</th>
                 <th>Profesor</th>
-                <th *ngIf="!api.soyAlumno()">Acciones</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
             <tr *ngFor="let asig of asignaturas$ | async">
                 <td>{{ asig.clase }}</td>
                 <td>{{ asig.profesor || '---' }}</td>
-                <td *ngIf="!api.soyAlumno()" style="text-align: center;">
-                    <button (click)="editar(asig)" class="btn-editar">✏️</button>
-                    <button *ngIf="api.soyAdmin()" (click)="eliminar(asig.id)" class="btn-borrar">🗑️</button>
+
+                <td style="text-align: center;">
+
+                    <ng-container *ngIf="api.soyAdmin() || api.soyProfesor()">
+                        <button (click)="editar(asig)" class="btn-editar" title="Editar">✏️</button>
+                        <button *ngIf="api.soyAdmin()" (click)="eliminar(asig.id)" class="btn-borrar"
+                            title="Borrar">🗑️</button>
+                    </ng-container>
+
+                    <ng-container *ngIf="api.soyAlumno()">
+
+                        <button *ngIf="!asig.matriculaId" (click)="matricularse(asig)" class="btn-nuevo"
+                            style="padding: 5px 10px; font-size: 0.9rem;">
+                            ➕ Matricularme
+                        </button>
+
+                        <button *ngIf="asig.matriculaId" (click)="desmatricularse(asig)" class="btn-borrar">
+                            ❌ Dejar Asignatura
+                        </button>
+
+                    </ng-container>
+
                 </td>
-            </tr>
-            <tr *ngIf="(asignaturas$ | async)?.length === 0">
-                <td colspan="3" style="text-align: center; padding: 20px;">No hay asignaturas registradas.</td>
             </tr>
         </tbody>
     </table>
@@ -46,18 +61,15 @@
     <div class="modal-overlay" *ngIf="mostrarModal">
         <div class="modal-content animate-fade-in">
             <h3>{{ formAsignatura.id === 0 ? 'Nueva Asignatura' : 'Editar Asignatura' }}</h3>
-
             <form (ngSubmit)="guardar()">
-                <label>Nombre de la Clase:</label>
-                <input type="text" [(ngModel)]="formAsignatura.clase" name="clase" class="input-form"
-                    placeholder="Ej: Matemáticas" required>
+                <label class="label-form">Nombre de la Clase:</label>
+                <input type="text" [(ngModel)]="formAsignatura.clase" name="clase" class="input-form" required>
 
-                <label *ngIf="api.soyAdmin()">Profesor:</label>
-                <select *ngIf="api.soyAdmin()" [(ngModel)]="formAsignatura.profesor" name="profesor" class="input-form">
-                    <option value="">-- Selecciona --</option>
-                    <option *ngFor="let prof of listaProfesores"
-                        [value]="prof.usuario || prof.nombreUsuario || prof.nombre">
-                        {{ prof.nombre }} {{ prof.apellido }} ({{ prof.usuario || prof.nombreUsuario }})
+                <label class="label-form">Profesor:</label>
+                <select [(ngModel)]="formAsignatura.profesor" name="profesor" class="input-form" required>
+                    <option value="">-- Sin asignar --</option>
+                    <option *ngFor="let prof of listaProfesores" [value]="prof.nombre">
+                        {{ prof.nombre }}
                     </option>
                 </select>
 
@@ -70,22 +82,22 @@
     </div>
 
     <div class="modal-overlay" *ngIf="mostrarModalProfesor">
-        <div class="modal-content animate-fade-in" style="border-top: 5px solid #6f42c1;">
+        <div class="modal-content animate-fade-in" style="border-top: 5px solid #8e44ad;">
             <h3>👨‍🏫 Nuevo Profesor y Asignatura</h3>
             <p class="text-muted" style="font-size: 0.9em;">Se generará usuario y contraseña automáticamente.</p>
 
             <form (ngSubmit)="crearProfesorYAsignatura()">
-                <label>Nombre del Profesor:</label>
+                <label class="label-form">Nombre del Profesor:</label>
                 <input type="text" [(ngModel)]="formProfesor.nombre" name="nombreProf" class="input-form"
                     placeholder="Ej: Juan Pérez" required>
 
-                <label>Asignatura a impartir:</label>
+                <label class="label-form">Asignatura a impartir:</label>
                 <input type="text" [(ngModel)]="formProfesor.asignaturaInicial" name="asigInicial" class="input-form"
                     placeholder="Ej: Física Cuántica" required>
 
                 <div class="botones-modal">
                     <button type="button" (click)="cerrarModalProfesor()" class="btn-cancelar">Cancelar</button>
-                    <button type="submit" class="btn-guardar" style="background-color: #6f42c1;">Crear Todo</button>
+                    <button type="submit" class="btn-guardar" style="background-color: #8e44ad;">Crear Todo</button>
                 </div>
             </form>
         </div>

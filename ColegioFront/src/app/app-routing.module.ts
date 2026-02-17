@@ -17,7 +17,7 @@ const routes: Routes = [
   { path: 'asignaturas', component: AsignaturasComponent },
   { path: 'notas', component: NotasComponent },
   { path: 'dashboard', component: DashboardComponent },
-  { path: 'mi-perfil', component: PerfilAlumnoComponent },
+  { path: 'perfil-alumno', component: PerfilAlumnoComponent },
   { path: 'dashboard-profesor', component: DashboarProfesorComponent },
   { path: '**', redirectTo: 'login' }
 ];
