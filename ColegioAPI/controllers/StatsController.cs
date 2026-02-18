@@ -31,9 +31,9 @@ namespace ColegioAPI.Controllers
             var nombreUsuarioRaw = User.Identity?.Name ?? "";
             var todosAlumnos = await _context.Alumnos
                 .Include(a => a.AsignaturaAlumnos!)
-                    .ThenInclude(aa => aa.Asignatura)
+                .ThenInclude(aa => aa.Asignatura)
                 .Include(a => a.AsignaturaAlumnos!)
-                    .ThenInclude(aa => aa.Notas)
+                .ThenInclude(aa => aa.Notas)
                 .ToListAsync();
 
             var alumno = todosAlumnos.FirstOrDefault(a =>
@@ -98,117 +98,85 @@ namespace ColegioAPI.Controllers
                 .ToLower().Replace(" ", "").Trim();
         }
 
-
         // ==========================================
-        // 2. ROL PROFESOR: DASHBOARD ESPECÍFICO
+        // 4. ROL PROFESOR: DASHBOARD ESPECÍFICO
         // ==========================================
         [HttpGet("profesor")]
         [Authorize(Roles = "Profesor")]
         public async Task<ActionResult<object>> GetStatsProfesor()
         {
-            var usuario = User.Identity?.Name;
+            var usuario = User.Identity?.Name ?? "";
 
-            // 1. Buscamos asignaturas
-            var todasAsignaturas = await _context.Asignaturas.ToListAsync();
-            var misAsignaturas = todasAsignaturas
-                .Where(a => a.Profesor != null && a.Profesor.ToLower().Contains(usuario?.ToLower() ?? ""))
-                .ToList();
+            // 1. Cargamos asignaturas
+            var misAsignaturas = await _context.Asignaturas
+                .Where(a => a.Profesor != null && EF.Functions.ILike(a.Profesor, usuario))
+                .ToListAsync();
 
-            if (!misAsignaturas.Any()) misAsignaturas = todasAsignaturas;
-
+            if (!misAsignaturas.Any()) return Ok(new { mensaje = "No hay asignaturas" });
             var idsAsignaturas = misAsignaturas.Select(a => a.Id).ToList();
 
-            // 2. Traemos Matrículas y Notas
+            // 2. Cargamos matrículas y notas con TODA la jerarquía (Include/ThenInclude)
             var misMatriculas = await _context.Asignatura_Alumnos
                 .Include(aa => aa.Alumno)
                 .Include(aa => aa.Asignatura)
-                .Where(aa => idsAsignaturas.Contains(aa.AsignaturaId))
-                .ToListAsync();
+                .Where(aa => idsAsignaturas.Contains(aa.AsignaturaId)).ToListAsync();
 
             var misNotas = await _context.Notas
-                .Include(n => n.AsignaturaAlumno)
-                .ThenInclude(aa => aa.Alumno)
-                .Where(n => idsAsignaturas.Contains(n.AsignaturaAlumno.AsignaturaId))
-                .ToListAsync();
+                .Include(n => n.AsignaturaAlumno).ThenInclude(aa => aa.Alumno)
+                .Where(n => idsAsignaturas.Contains(n.AsignaturaAlumno.AsignaturaId)).ToListAsync();
 
-            // --- CÁLCULOS ---
+            // 3. Cálculos de Ratio y Pendientes
+            var idsConNota = misNotas.Select(n => n.AsignaturaAlumnoId).ToList();
+            var pendientesData = misMatriculas.Where(m => !idsConNota.Contains(m.Id))
+                .Select(m => new
+                {
+                    nombre = m.Alumno != null ? $"{m.Alumno.Nombre} {m.Alumno.Apellido}" : "Sin nombre",
+                    asignatura = m.Asignatura?.Clase ?? "N/A"
+                }).ToList();
 
-            // A) Totales
-            var totalAlumnosReales = misMatriculas.Select(m => m.AlumnoId).Distinct().Count();
-            var totalExamenesEsperados = misMatriculas.Count;
-            var totalExamenesCorregidos = misNotas.Count;
-
-            // B) KPI Mejor/Peor
             var mejorNotaObj = misNotas.OrderByDescending(n => n.Valor).FirstOrDefault();
             var peorNotaObj = misNotas.OrderBy(n => n.Valor).FirstOrDefault();
 
-            // C) Pendientes (Lista detallada)
-            var listaPendientes = misMatriculas
-                .Where(m => !misNotas.Any(n => n.AsignaturaAlumnoId == m.Id))
-                .Select(m => new
+            // 🚀 RESPUESTA FINAL: Usamos camelCase y propiedades name/value para las gráficas
+            return Ok(new
+            {
+                totalAlumnos = misMatriculas.Select(m => m.AlumnoId).Distinct().Count(),
+                totalAsignaturas = misAsignaturas.Count,
+
+                mejorAlumno = new
                 {
-                    nombre = m.Alumno.Nombre + " " + m.Alumno.Apellido,
-                    asignatura = m.Asignatura.Clase
-                })
-                .Take(10).ToList();
+                    nombre = mejorNotaObj?.AsignaturaAlumno?.Alumno != null ? $"{mejorNotaObj.AsignaturaAlumno.Alumno.Nombre} {mejorNotaObj.AsignaturaAlumno.Alumno.Apellido}" : "N/A",
+                    valor = mejorNotaObj?.Valor ?? 0m
+                },
+                peorAlumno = new
+                {
+                    nombre = peorNotaObj?.AsignaturaAlumno?.Alumno != null ? $"{peorNotaObj.AsignaturaAlumno.Alumno.Nombre} {peorNotaObj.AsignaturaAlumno.Alumno.Apellido}" : "N/A",
+                    valor = peorNotaObj?.Valor ?? 0m
+                },
 
-            // D) Gráfica Progreso (Corrección)
-            var totalPendientes = totalExamenesEsperados - totalExamenesCorregidos;
-            var progresoCorreccion = new[]
-            {
-        new { name = "Evaluados", value = totalExamenesCorregidos },
-        new { name = "Pendientes", value = totalPendientes < 0 ? 0 : totalPendientes }
-    };
+                alumnosEnRiesgo = misNotas.Where(n => n.Valor < 5).Select(n => new
+                {
+                    nombre = n.AsignaturaAlumno?.Alumno != null ? $"{n.AsignaturaAlumno.Alumno.Nombre} {n.AsignaturaAlumno.Alumno.Apellido}" : "Desconocido",
+                    valor = n.Valor
+                }).Take(5).ToList(),
 
-            // E) Gráfica Ratio (Aprobados vs Suspensos vs Sin Calificar) - CORREGIDO
-            var aprobados = misNotas.Count(n => n.Valor >= 5);
-            var suspensos = misNotas.Count(n => n.Valor < 5);
-            // "Sin Calificar" es lo mismo que los pendientes (matrículas sin nota)
-            var sinCalificar = totalExamenesEsperados - (aprobados + suspensos);
+                aprobadosVsSuspensos = new[] {
+            new { name = "Aprobados", value = misNotas.Count(n => n.Valor >= 5) },
+            new { name = "Suspensos", value = misNotas.Count(n => n.Valor < 5) },
+            new { name = "Sin Calificar", value = pendientesData.Count }
+        },
 
-            var ratioData = new[]
-            {
-        new { name = "Aprobados", value = aprobados },
-        new { name = "Suspensos", value = suspensos },
-        new { name = "Sin Calificar", value = sinCalificar < 0 ? 0 : sinCalificar }
-    };
-
-            // --- RESPUESTA FINAL ---
-            var stats = new
-            {
-                TotalAlumnos = totalAlumnosReales,
-                TotalAsignaturas = misAsignaturas.Count,
-
-                MejorAlumno = mejorNotaObj != null
-                    ? new { nombre = mejorNotaObj.AsignaturaAlumno.Alumno.Nombre, valor = mejorNotaObj.Valor }
-                    : new { nombre = "N/A", valor = 0.0m },
-
-                PeorAlumno = peorNotaObj != null
-                    ? new { nombre = peorNotaObj.AsignaturaAlumno.Alumno.Nombre, valor = peorNotaObj.Valor }
-                    : new { nombre = "N/A", valor = 0.0m },
-
-                AlumnosEnRiesgo = misNotas
-                    .Where(n => n.Valor < 5)
-                    .Select(n => new
-                    {
-                        nombre = n.AsignaturaAlumno.Alumno.Nombre + " " + n.AsignaturaAlumno.Alumno.Apellido,
-                        valor = n.Valor
-                    })
-                    .Take(5).ToList(),
-
-                Pendientes = listaPendientes,
-                ProgresoCorreccion = progresoCorreccion,
-
-                AprobadosVsSuspensos = ratioData,
-
-                AlumnosPorAsignatura = misAsignaturas.Select(a => new
+                pendientes = pendientesData,
+                progresoCorreccion = new[] {
+            new { name = "Evaluados", value = misNotas.Count },
+            new { name = "Pendientes", value = pendientesData.Count }
+        },
+                alumnosPorAsignatura = misAsignaturas.Select(a => new
                 {
                     name = a.Clase,
                     value = misMatriculas.Count(m => m.AsignaturaId == a.Id)
                 })
-            };
-
-            return Ok(stats);
+            });
         }
         // ==========================================
         // 3. ROL ADMIN: DASHBOARD GENERAL

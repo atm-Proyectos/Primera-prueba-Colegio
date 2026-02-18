@@ -86,21 +86,28 @@ namespace ColegioAPI.Controllers
             {
                 query = query.Where(n => EF.Functions.ILike(n.AsignaturaAlumno.Asignatura.Profesor, usuario));
             }
+            // En NotasController.cs -> GetNotas()
             else if (esAlumno)
             {
-                // 1. Traemos los datos necesarios a una lista primero
-                var todasLasNotas = await query.ToListAsync();
+                // 1. Cargamos TODO incluyendo al alumno y asignatura de forma explícita
+                var todasLasNotas = await _context.Notas
+                    .Include(n => n.AsignaturaAlumno)
+                        .ThenInclude(aa => aa.Alumno)
+                    .Include(n => n.AsignaturaAlumno)
+                        .ThenInclude(aa => aa.Asignatura)
+                    .ToListAsync();
 
-                // 2. Filtramos en memoria usando la función Normalizar
+                // 2. Filtramos comparando el nombre normalizado contra el usuario del Token
                 var notasFiltradas = todasLasNotas
-                    .Where(n => Normalizar($"{n.AsignaturaAlumno?.Alumno?.Nombre} {n.AsignaturaAlumno?.Alumno?.Apellido}") == usuario)
+                    .Where(n => n.AsignaturaAlumno?.Alumno != null &&
+                           Normalizar($"{n.AsignaturaAlumno.Alumno.Nombre} {n.AsignaturaAlumno.Alumno.Apellido}") == Normalizar(usuario))
                     .Select(n => new
                     {
-                        Id = n.Id,
-                        Valor = n.Valor,
-                        NombreAlumno = n.AsignaturaAlumno?.Alumno?.Nombre + " " + n.AsignaturaAlumno?.Alumno?.Apellido,
-                        NombreAsignatura = n.AsignaturaAlumno?.Asignatura?.Clase,
-                        AsignaturaAlumnoId = n.AsignaturaAlumnoId
+                        id = n.Id,
+                        valor = n.Valor,
+                        nombreAlumno = $"{n.AsignaturaAlumno!.Alumno!.Nombre} {n.AsignaturaAlumno.Alumno.Apellido}",
+                        nombreAsignatura = n.AsignaturaAlumno.Asignatura?.Clase ?? "Asignatura",
+                        asignaturaAlumnoId = n.AsignaturaAlumnoId
                     }).ToList();
 
                 return Ok(notasFiltradas);

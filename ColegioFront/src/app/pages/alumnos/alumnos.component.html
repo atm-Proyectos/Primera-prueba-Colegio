@@ -73,9 +73,9 @@
           <ng-container *ngIf="api.soyAdmin()">
             <button (click)="editar(alumno)" class="btn-editar" title="Editar">✏️</button>
             <button (click)="eliminar(alumno.id)" class="btn-borrar" title="Eliminar">🗑️</button>
+            <button (click)="abrirMatriculas(alumno)" class="btn-matricular" title="Gestionar asignaturas">🎓</button>
           </ng-container>
 
-          <button (click)="abrirMatriculas(alumno)" class="btn-matricular" title="Gestionar asignaturas">🎓</button>
         </td>
       </tr>
 

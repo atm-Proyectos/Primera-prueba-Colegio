@@ -37,8 +37,7 @@
                 </div>
                 <ul *ngIf="alumnosEnRiesgo.length > 0" class="lista-riesgo">
                     <li *ngFor="let item of alumnosEnRiesgo">
-                        <strong>{{ item.nombre }}</strong>
-                        <span class="badge-suspenso">{{ item.valor }}</span>
+                        <strong>{{ item.nombre }}</strong> <span class="badge-suspenso">{{ item.valor }}</span>
                     </li>
                 </ul>
             </div>

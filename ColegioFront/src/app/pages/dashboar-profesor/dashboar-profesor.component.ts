@@ -66,15 +66,12 @@ export class DashboarProfesorComponent implements OnInit {
     this.api.getStatsProfesor().subscribe({
       next: (data: any) => {
         this.stats = data;
-
-        // Mapeamos los datos que vienen del C#
-        if (data.mejorAlumno) this.mejorAlumno = data.mejorAlumno;
-        if (data.peorAlumno) this.peorAlumno = data.peorAlumno;
-        if (data.alumnosEnRiesgo) this.alumnosEnRiesgo = data.alumnosEnRiesgo;
-        if (data.aprobadosVsSuspensos) this.ratioAprobados = data.aprobadosVsSuspensos;
-        if (data.pendientes) this.alumnosPendientes = data.pendientes;
-        if (data.progresoCorreccion) this.progresoCorreccion = data.progresoCorreccion;
-
+        this.mejorAlumno = data.mejorAlumno;
+        this.peorAlumno = data.peorAlumno;
+        this.alumnosEnRiesgo = data.alumnosEnRiesgo;
+        this.ratioAprobados = data.aprobadosVsSuspensos;
+        this.alumnosPendientes = data.pendientes;
+        this.progresoCorreccion = data.progresoCorreccion;
         this.cargando = false;
       },
       error: (err) => {

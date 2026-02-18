@@ -84,8 +84,8 @@
   </thead>
   <tbody>
     <tr *ngFor="let nota of notas$ | async">
-      <td>{{ nota.nombreAlumno || nota.alumno }}</td>
-      <td>{{ nota.nombreAsignatura || nota.asignatura }}</td>
+      <td>{{ nota.nombreAlumno || 'Yo' }}</td>
+      <td>{{ nota.nombreAsignatura || 'General' }}</td>
       <td>
         <span class="badge-nota" [ngClass]="nota.valor >= 5 ? 'aprobado' : 'suspenso'">
           {{ nota.valor }}
