@@ -15,8 +15,8 @@ export class DashboarProfesorComponent implements OnInit {
   nombreProfesor: string = '';
 
   // Variables específicas para los KPIs nuevos
-  mejorAlumno: any = { nombre: 'N/A', valor: '-' };
-  peorAlumno: any = { nombre: 'N/A', valor: '-' };
+  mejorAlumno: any = { Nombre: 'N/A', Valor: '-' };
+  peorAlumno: any = { Nombre: 'N/A', Valor: '-' };
   alumnosEnRiesgo: any[] = [];
   ratioAprobados: any[] = [];
   alumnosPendientes: any[] = [];

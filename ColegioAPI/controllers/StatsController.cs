@@ -51,31 +51,34 @@ namespace ColegioAPI.Controllers
 
             return Ok(new
             {
-                totalAsignaturas = alumno.AsignaturaAlumnos!.Count,
-                promedioGlobal = matriculasConNota.Any()
+                // ✅ Estructura general en PascalCase
+                TotalAsignaturas = alumno.AsignaturaAlumnos!.Count,
+                PromedioGlobal = matriculasConNota.Any()
                     ? Math.Round(matriculasConNota.Average(aa => (double)aa.Notas!.Valor), 2)
                     : 0,
-                aprobadas,
-                suspensas,
-                sinCalificar,
-                // Datos para la tarta 🥧
-                statsTarta = new[] {
-            new { Name = "Aprobadas", Value = aprobadas },
-            new { Name = "Suspensas", Value = suspensas },
-            new { Name = "Sin Calificar", Value = sinCalificar }
-        },
+                Aprobadas = aprobadas,
+                Suspensas = suspensas,
+                SinCalificar = sinCalificar,
 
-                // Datos para las barras 📊
-                graficaNotas = matriculasConNota.Select(aa => new
+                // 🎯 SOLUCIÓN GRÁFICOS: name y value en minúsculas
+                StatsTarta = new[] {
+                    new { name = "Aprobadas", value = aprobadas },
+                    new { name = "Suspensas", value = suspensas },
+                    new { name = "Sin Calificar", value = sinCalificar }
+                },
+                GraficaNotas = matriculasConNota.Select(aa => new
                 {
-                    Name = aa.Asignatura?.Clase ?? "Asignatura",
-                    Value = aa.Notas!.Valor
+                    name = aa.Asignatura?.Clase ?? "Asignatura",
+                    value = aa.Notas!.Valor
                 }),
-                // Lista de asignaturas matriculadas
-                asignaturas = alumno.AsignaturaAlumnos.Select(aa => new
+
+                // Lista de la tabla inferior
+                Asignaturas = alumno.AsignaturaAlumnos.Select(aa => new
                 {
                     Nombre = aa.Asignatura?.Clase,
-                    Profesor = aa.Asignatura?.Profesor
+                    Clase = aa.Asignatura?.Clase,
+                    Profesor = aa.Asignatura?.Profesor,
+                    Nota = aa.Notas?.Valor.ToString() ?? "Sin calificar"
                 })
             });
         }
@@ -130,9 +133,9 @@ namespace ColegioAPI.Controllers
             var pendientesData = misMatriculas.Where(m => !idsConNota.Contains(m.Id))
                 .Select(m => new
                 {
-                    id = m.Id,
-                    nombre = m.Alumno != null ? $"{m.Alumno.Nombre} {m.Alumno.Apellido}" : "Sin nombre",
-                    asignatura = m.Asignatura?.Clase ?? "N/A"
+                    Id = m.Id,
+                    Nombre = m.Alumno != null ? $"{m.Alumno.Nombre} {m.Alumno.Apellido}" : "Sin nombre",
+                    Asignatura = m.Asignatura?.Clase ?? "N/A"
                 }).ToList();
 
             var mejorNotaObj = misNotas.OrderByDescending(n => n.Valor).FirstOrDefault();
@@ -141,44 +144,44 @@ namespace ColegioAPI.Controllers
             // 🚀 RESPUESTA FINAL: Usamos camelCase y propiedades name/value para las gráficas
             return Ok(new
             {
-                totalAlumnos = misMatriculas.Select(m => m.AlumnoId).Distinct().Count(),
-                totalAsignaturas = misAsignaturas.Count,
+                TotalAlumnos = misMatriculas.Select(m => m.AlumnoId).Distinct().Count(),
+                TotalAsignaturas = misAsignaturas.Count,
 
-                mejorAlumno = new
+                MejorAlumno = new
                 {
                     Id = mejorNotaObj?.Id ?? 0,
                     Nombre = mejorNotaObj?.AsignaturaAlumno?.Alumno != null ? $"{mejorNotaObj.AsignaturaAlumno.Alumno.Nombre} {mejorNotaObj.AsignaturaAlumno.Alumno.Apellido}" : "N/A",
                     Valor = mejorNotaObj?.Valor ?? 0m
                 },
-                peorAlumno = new
+                PeorAlumno = new
                 {
                     Id = peorNotaObj?.Id ?? 0,
                     Nombre = peorNotaObj?.AsignaturaAlumno?.Alumno != null ? $"{peorNotaObj.AsignaturaAlumno.Alumno.Nombre} {peorNotaObj.AsignaturaAlumno.Alumno.Apellido}" : "N/A",
                     Valor = peorNotaObj?.Valor ?? 0m
                 },
 
-                alumnosEnRiesgo = misNotas.Where(n => n.Valor < 5).Select(n => new
+                AlumnosEnRiesgo = misNotas.Where(n => n.Valor < 5).Select(n => new
                 {
                     Id = n.Id,
                     Nombre = n.AsignaturaAlumno?.Alumno != null ? $"{n.AsignaturaAlumno.Alumno.Nombre} {n.AsignaturaAlumno.Alumno.Apellido}" : "Desconocido",
                     Valor = n.Valor
                 }).Take(5).ToList(),
 
-                aprobadosVsSuspensos = new[] {
-            new { Name = "Aprobados", Value = misNotas.Count(n => n.Valor >= 5) },
-            new { Name = "Suspensos", Value = misNotas.Count(n => n.Valor < 5) },
-            new { Name = "Sin Calificar", Value = pendientesData.Count }
+                AprobadosVsSuspensos = new[] {
+            new { name = "Aprobados", value = misNotas.Count(n => n.Valor >= 5) },
+            new { name = "Suspensos", value = misNotas.Count(n => n.Valor < 5) },
+            new { name = "Sin Calificar", value = pendientesData.Count }
         },
 
-                pendientes = pendientesData,
-                progresoCorreccion = new[] {
-            new { Name = "Evaluados", Value = misNotas.Count },
-            new { Name = "Pendientes", Value = pendientesData.Count }
+                Pendientes = pendientesData,
+                ProgresoCorreccion = new[] {
+            new { name = "Evaluados", value = misNotas.Count },
+            new { name = "Pendientes", value = pendientesData.Count }
         },
-                alumnosPorAsignatura = misAsignaturas.Select(a => new
+                AlumnosPorAsignatura = misAsignaturas.Select(a => new
                 {
-                    Name = a.Clase,
-                    Value = misMatriculas.Count(m => m.AsignaturaId == a.Id)
+                    name = a.Clase,
+                    value = misMatriculas.Count(m => m.AsignaturaId == a.Id)
                 })
             });
         }
@@ -187,16 +190,16 @@ namespace ColegioAPI.Controllers
         // ==========================================
         [HttpGet]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<DashboardStats>> GetStatsAdmin()
+        public async Task<ActionResult<object>> GetStatsAdmin()
         {
-            var totalAlumnos = await _context.Alumnos.CountAsync();
-            var totalAsignaturas = await _context.Asignaturas.CountAsync();
+            var TotalAlumnos = await _context.Alumnos.CountAsync();
+            var TotalAsignaturas = await _context.Asignaturas.CountAsync();
 
             var alumnos = await _context.Alumnos.ToListAsync();
-            double edadMedia = totalAlumnos > 0 ? alumnos.Average(a => (double)a.Edad) : 0;
+            double EdadMedia = TotalAlumnos > 0 ? alumnos.Average(a => (double)a.Edad) : 0;
 
             // 1. Popularidad: Corregido a Mayúsculas y campos required
-            var alumnosPorAsignatura = await _context.Asignatura_Alumnos
+            var AlumnosPorAsignatura = await _context.Asignatura_Alumnos
                 .GroupBy(aa => aa.Asignatura.Clase)
                 .Select(g => new DatoGrafica
                 {
@@ -208,7 +211,7 @@ namespace ColegioAPI.Controllers
                 .ToListAsync();
 
             // 2. Distribución: Corregido el error de conversión int a string
-            var distribucionEdades = alumnos
+            var DistribucionEdades = alumnos
                 .GroupBy(a => a.Edad)
                 .Select(g => new DatoGrafica
                 {
@@ -221,7 +224,7 @@ namespace ColegioAPI.Controllers
                 .ToList();
 
             // 3. Nota Media
-            var notasPorAsignatura = await _context.Notas
+            var NotasPorAsignatura = await _context.Notas
                 .Include(n => n.AsignaturaAlumno)
                 .ThenInclude(aa => aa.Asignatura)
                 .GroupBy(n => n.AsignaturaAlumno.Asignatura.Clase)
@@ -235,24 +238,24 @@ namespace ColegioAPI.Controllers
                 .ToListAsync();
 
             // 4. Aprobados vs Suspensos
-            var totalAprobados = await _context.Notas.CountAsync(n => n.Valor >= 5);
-            var totalSuspensos = await _context.Notas.CountAsync(n => n.Valor < 5);
-            var aprobadosVsSuspensos = new List<DatoGrafica>
+            var TotalAprobados = await _context.Notas.CountAsync(n => n.Valor >= 5);
+            var TotalSuspensos = await _context.Notas.CountAsync(n => n.Valor < 5);
+            var AprobadosVsSuspensos = new List<DatoGrafica>
     {
-        new DatoGrafica { Nombre = "Aprobados", Valor = totalAprobados, ValorDecimal = 0, Asignatura = "" },
-        new DatoGrafica { Nombre = "Suspensos", Valor = totalSuspensos, ValorDecimal = 0, Asignatura = "" }
+        new DatoGrafica { Nombre = "Aprobados", Valor = TotalAprobados, ValorDecimal = 0, Asignatura = "" },
+        new DatoGrafica { Nombre = "Suspensos", Valor = TotalSuspensos, ValorDecimal = 0, Asignatura = "" }
     };
 
             // 5. Retorno: Añadido campo obligatorio AsignaturasMatriculadas
-            return Ok(new DashboardStats
+            return Ok(new
             {
-                TotalAlumnos = totalAlumnos,
-                TotalAsignaturas = totalAsignaturas,
-                EdadMediaGlobal = Math.Round(edadMedia, 1),
-                AlumnosPorAsignatura = alumnosPorAsignatura,
-                DistribucionEdades = distribucionEdades,
-                NotaMediaPorAsignatura = notasPorAsignatura,
-                AprobadosVsSuspensos = aprobadosVsSuspensos,
+                TotalAlumnos = TotalAlumnos,
+                TotalAsignaturas = TotalAsignaturas,
+                EdadMediaGlobal = Math.Round(EdadMedia, 1),
+                AlumnosPorAsignatura = AlumnosPorAsignatura.Select(g => new { name = g.Nombre, value = g.Valor }),
+                DistribucionEdades = DistribucionEdades.Select(g => new { name = g.Nombre, value = g.Valor }),
+                MediaPorAsignatura = NotasPorAsignatura.Select(g => new { name = g.Nombre, value = g.Valor }),
+                AprobadosVsSuspensos = AprobadosVsSuspensos.Select(g => new { name = g.Nombre, value = g.Valor }),
                 AsignaturasMatriculadas = new List<DatoGrafica>() // ✨ Requerido por el DTO
             });
         }

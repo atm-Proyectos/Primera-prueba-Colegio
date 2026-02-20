@@ -23,6 +23,6 @@ namespace ColegioAPI.models
 
         // Relación
         [JsonIgnore]
-        public required List<AsignaturaAlumno>? AsignaturaAlumnos { get; set; }
+        public List<AsignaturaAlumno>? AsignaturaAlumnos { get; set; }
     }
 }

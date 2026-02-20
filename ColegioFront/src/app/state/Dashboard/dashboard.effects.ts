@@ -13,30 +13,7 @@ export class DashboardEffects {
         mergeMap(() => this.api.getStats()
             .pipe(
                 map(data => {
-                    const statsFormat = {
-                        totalAlumnos: data.totalAlumnos,
-                        totalAsignaturas: data.totalAsignaturas,
-                        edadMediaGlobal: data.edadMediaGlobal,
-                        // Usamos 'nombre' y 'valor' que es lo que viene del C# ahora
-                        alumnosPorAsignatura: (data.alumnosPorAsignatura || []).map((d: any) => ({
-                            name: d.nombre,
-                            value: d.valor
-                        })),
-                        distribucionEdades: (data.distribucionEdades || []).map((d: any) => ({
-                            name: d.nombre,
-                            value: d.valor
-                        })),
-                        aprobadosVsSuspensos: (data.aprobadosVsSuspensos || []).map((d: any) => ({
-                            name: d.nombre,
-                            value: d.valor
-                        })),
-                        notaMediaPorAsignatura: (data.notaMediaPorAsignatura || []).map((d: any) => ({
-                            name: d.nombre,
-                            value: d.valor,
-                            valorDecimal: d.valorDecimal
-                        }))
-                    };
-                    return DashboardActions.cargarStatsSuccess({ stats: statsFormat });
+                    return DashboardActions.cargarStatsSuccess({ stats: data });
                 }),
                 catchError(error => {
                     console.error("Error en Effect Dashboard:", error);

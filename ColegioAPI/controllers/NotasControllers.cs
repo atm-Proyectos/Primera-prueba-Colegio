@@ -34,8 +34,8 @@ namespace ColegioAPI.Controllers
                     .Select(n => new
                     {
                         Id = n.Id,
-                        Alumno = n.AsignaturaAlumno.Alumno.Nombre + " " + n.AsignaturaAlumno.Alumno.Apellido,
-                        Asignatura = n.AsignaturaAlumno.Asignatura.Clase,
+                        NombreAlumno = n.AsignaturaAlumno.Alumno.Nombre + " " + n.AsignaturaAlumno.Alumno.Apellido,
+                        NombreAsignatura = n.AsignaturaAlumno.Asignatura.Clase,
                         Profesor = n.AsignaturaAlumno.Asignatura.Profesor,
                         Valor = n.Valor
                     })
@@ -54,8 +54,8 @@ namespace ColegioAPI.Controllers
                 .Select(n => new
                 {
                     Id = n.Id,
-                    Alumno = n.AsignaturaAlumno.Alumno.Nombre + " " + n.AsignaturaAlumno.Alumno.Apellido,
-                    Asignatura = n.AsignaturaAlumno.Asignatura.Clase,
+                    NombreAlumno = n.AsignaturaAlumno.Alumno.Nombre + " " + n.AsignaturaAlumno.Alumno.Apellido,
+                    NombreAsignatura = n.AsignaturaAlumno.Asignatura.Clase,
                     Profesor = n.AsignaturaAlumno.Asignatura.Profesor,
                     Valor = n.Valor
                 })
@@ -103,11 +103,11 @@ namespace ColegioAPI.Controllers
                            Normalizar($"{n.AsignaturaAlumno.Alumno.Nombre} {n.AsignaturaAlumno.Alumno.Apellido}") == Normalizar(usuario))
                     .Select(n => new
                     {
-                        id = n.Id,
-                        valor = n.Valor,
-                        nombreAlumno = $"{n.AsignaturaAlumno!.Alumno!.Nombre} {n.AsignaturaAlumno.Alumno.Apellido}",
-                        nombreAsignatura = n.AsignaturaAlumno.Asignatura?.Clase ?? "Asignatura",
-                        asignaturaAlumnoId = n.AsignaturaAlumnoId
+                        Id = n.Id,
+                        Valor = n.Valor,
+                        NombreAlumno = $"{n.AsignaturaAlumno!.Alumno!.Nombre} {n.AsignaturaAlumno.Alumno.Apellido}",
+                        NombreAsignatura = n.AsignaturaAlumno.Asignatura?.Clase ?? "Asignatura",
+                        AsignaturaAlumnoId = n.AsignaturaAlumnoId
                     }).ToList();
 
                 return Ok(notasFiltradas);

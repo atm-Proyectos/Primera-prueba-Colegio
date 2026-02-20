@@ -47,38 +47,41 @@
                 </ngx-charts-pie-chart>
             </div>
         </div>
-        <div class="card-dashboard">
-            <h3>📝 Mis Calificaciones</h3>
-            <div *ngIf="asignaturas.length === 0" class="empty-state">
-                <p>🎉 ¡Sin asignaturas!</p>
+        <hr>
+        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+            <div class="card-dashboard" style="flex: 1; min-width: 300px;">
+                <h3>📝 Mis Calificaciones</h3>
+                <div *ngIf="asignaturas.length === 0" class="empty-state">
+                    <p>🎉 ¡Sin asignaturas!</p>
+                </div>
+                <table class="tabla-notas" *ngIf="asignaturas.length > 0">
+                    <thead>
+                        <tr>
+                            <th>Asignatura</th>
+                            <th>Nota</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let p of asignaturas">
+                            <td>{{ p.Clase }}</td>
+                            <td>{{ p.Nota }}</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-            <table class="tabla-notas" *ngIf="asignaturas.length > 0">
-                <thead>
-                    <tr>
-                        <th>Asignatura</th>
-                        <th>Nota</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let p of asignaturas">
-                        <td>{{ p.Clase }}</td>
-                        <td>{{ p.Nota }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div class="card-dashboard">
-            <h3>📝 Asignaturas Matriculadas</h3>
+            <div class="card-dashboard" style="flex: 1; min-width: 300px;">
+                <h3>📝 Asignaturas Matriculadas</h3>
 
-            <div *ngIf="asignaturas.length === 0" class="empty-state">
-                <p>🎉 ¡Sin asignaturas!</p>
+                <div *ngIf="asignaturas.length === 0" class="empty-state">
+                    <p>🎉 ¡Sin asignaturas!</p>
+                </div>
+                <ul class="lista-simple" *ngIf="asignaturas.length > 0">
+                    <li *ngFor="let p of asignaturas">
+                        <span>{{ p.Nombre }}</span>
+                        <small style="color: #666;">Prof: {{ p.Profesor }}</small>
+                    </li>
+                </ul>
             </div>
-            <ul class="lista-simple" *ngIf="asignaturas.length > 0">
-                <li *ngFor="let p of asignaturas">
-                    <span>{{ p.nombre }}</span>
-                    <small style="color: #666;"> - Prof: {{ p.profesor }}</small>
-                </li>
-            </ul>
         </div>
     </div>
 </div>
