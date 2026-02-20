@@ -11,21 +11,19 @@
         <div class="kpi-container">
             <div class="card-kpi green">
                 <h3>🏆 Aprobadas</h3>
-                <p class="numero">{{ stats.aprobadas }}</p>
+                <p class="promedio-valor">{{ stats.Aprobadas }}</p>
             </div>
             <div class="card-kpi red">
                 <h3>🏆 Suspensas</h3>
-                <p class="numero">{{ stats.suspensas }}</p>
+                <p class="promedio-valor">{{ stats.Suspensas }}</p>
             </div>
-
-
             <div class="card-kpi blue">
                 <h3>⭐ Nota Media</h3>
-                <p class="numero">{{ stats.promedioGlobal }}</p>
+                <p class="promedio-valor">{{ stats.PromedioGlobal }}</p>
             </div>
             <div class="card-kpi purple">
                 <h3>📚 Asignaturas</h3>
-                <p class="numero">{{ stats.totalAsignaturas }}</p>
+                <p class="promedio-valor">{{ stats.TotalAsignaturas }}</p>
             </div>
         </div>
 
@@ -34,7 +32,7 @@
         <div class="chart-section">
             <h3>📊 Notas por Asignatura</h3>
             <div class="chart-container">
-                <ngx-charts-bar-vertical [view]="view" [scheme]="colorScheme" [results]="stats.graficaNotas"
+                <ngx-charts-bar-vertical [view]="view" [scheme]="colorScheme" [results]="stats.GraficaNotas"
                     [gradient]="gradient" [xAxis]="showXAxis" [yAxis]="showYAxis" [legend]="showLegend"
                     [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxisLabel]="xAxisLabel"
                     [yAxisLabel]="yAxisLabel">
@@ -48,6 +46,26 @@
                     [legend]="true" [labels]="false" [doughnut]="true">
                 </ngx-charts-pie-chart>
             </div>
+        </div>
+        <div class="card-dashboard">
+            <h3>📝 Mis Calificaciones</h3>
+            <div *ngIf="asignaturas.length === 0" class="empty-state">
+                <p>🎉 ¡Sin asignaturas!</p>
+            </div>
+            <table class="tabla-notas" *ngIf="asignaturas.length > 0">
+                <thead>
+                    <tr>
+                        <th>Asignatura</th>
+                        <th>Nota</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let p of asignaturas">
+                        <td>{{ p.Clase }}</td>
+                        <td>{{ p.Nota }}</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
         <div class="card-dashboard">
             <h3>📝 Asignaturas Matriculadas</h3>

@@ -18,15 +18,25 @@ describe('NotasComponent', () => {
   const mockApiService = jasmine.createSpyObj('ApiService', [
     'getNotas',
     'getAlumnos',
+    'getAsignaturas',
     'getMatriculas',
     'guardarNota',
     'editarNota',
-    'eliminarNota'
+    'eliminarNota',
+    'soyProfesor',
+    'soyAdmin',
+    'soyAlumno',
+    'getUserName'
   ]);
 
-  // Respuestas vacías para evitar errores al cargar
+  // Respuestas predeterminadas para evitar errores de carga inicial
+  mockApiService.soyProfesor.and.returnValue(true);
+  mockApiService.soyAdmin.and.returnValue(false);
+  mockApiService.soyAlumno.and.returnValue(false);
+  mockApiService.getUserName.and.returnValue('Ignacio');
   mockApiService.getNotas.and.returnValue(of([]));
   mockApiService.getAlumnos.and.returnValue(of([]));
+  mockApiService.getAsignaturas.and.returnValue(of([]));
   mockApiService.getMatriculas.and.returnValue(of([]));
   mockApiService.guardarNota.and.returnValue(of({}));
   mockApiService.eliminarNota.and.returnValue(of({}));
@@ -52,44 +62,47 @@ describe('NotasComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  // --- TEST VISUAL + LÓGICA DE COLOR ---
-  it('debería pintar el texto en VERDE si la nota es >= 5 y ROJO si es < 5', () => {
+  // --- TEST VISUAL COMPLETO (VERDE Y ROJO) ---
+  it('debería pintar el texto en VERDE si la nota es >= 5 y ROJO si es < 5', async () => {
     const dummyNotas = [
-      { id: 1, valor: 8.5, nombreAlumno: 'Aprobado', nombreAsignatura: 'Mates', alumnoId: 1, asignaturaId: 1 },
-      { id: 2, valor: 3.0, nombreAlumno: 'Suspenso', nombreAsignatura: 'Mates', alumnoId: 2, asignaturaId: 1 }
+      { Id: 1, Valor: 8.5, NombreAlumn: 'Alumno A', NombreAsignatura: 'Mates' },
+      { Id: 2, Valor: 3.0, NombreAlumn: 'Alumno B', NombreAsignatura: 'Mates' }
     ];
 
-    store.setState({
-      notas: { loading: false, notas: dummyNotas, error: null }
-    });
+    store.setState({ notas: { loading: false, notas: dummyNotas, error: null } });
+
+    // Sincronización de renderizado
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
 
-    const filas = fixture.debugElement.queryAll(By.css('tbody tr'));
+    const filas = fixture.debugElement.queryAll(By.css('.badge-nota'));
 
-    // Fila 1: Aprobado (Debe ser verde)
-    // Buscamos la 3ra celda (td) que es la de la nota
-    const celdaNotaAprobada = filas[0].queryAll(By.css('td'))[2].nativeElement;
-    expect(celdaNotaAprobada.style.color).toBe('green');
-
-    // Fila 2: Suspenso (Debe ser rojo)
-    const celdaNotaSuspensa = filas[1].queryAll(By.css('td'))[2].nativeElement;
-    expect(celdaNotaSuspensa.style.color).toBe('red');
+    // ✅ Verificamos color exacto que Chrome renderiza para tus clases CSS
+    expect(window.getComputedStyle(filas[0].nativeElement).color).toBe('rgb(21, 87, 36)');
+    expect(window.getComputedStyle(filas[1].nativeElement).color).toBe('rgb(114, 28, 36)');
   });
 
-  // --- TEST INTERACCIÓN ---
-  it('debería intentar borrar la nota 99 al pulsar el botón', () => {
-    const dummyNotas = [
-      { id: 99, valor: 10, nombreAlumno: 'Crack', nombreAsignatura: 'Todo', alumnoId: 1, asignaturaId: 1 }
-    ];
+  // --- TEST INTERACCIÓN BORRADO ---
+  it('debería intentar borrar la nota 99 al pulsar el botón', async () => {
+    const dummyNotas = [{ Id: 99, Valor: 10, NombreAlumno: 'Carlos', NombreAsignatura: 'Tecnologia' }];
+
+    // ✅ Roles en booleano para que el HTML muestre el botón
+    mockApiService.soyProfesor.and.returnValue(true);
+    mockApiService.soyAlumno.and.returnValue(false);
 
     store.setState({ notas: { notas: dummyNotas, loading: false, error: null } });
+
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
 
     spyOn(component, 'eliminar');
     spyOn(window, 'confirm').and.returnValue(true);
 
-    const btnBorrar = fixture.debugElement.query(By.css('.btn-borrar'));
-    btnBorrar.nativeElement.click();
+    const btnEliminar = fixture.debugElement.query(By.css('.btn-eliminar'));
+    expect(btnEliminar).toBeTruthy();
+    btnEliminar.nativeElement.click();
 
     expect(component.eliminar).toHaveBeenCalledWith(99);
   });

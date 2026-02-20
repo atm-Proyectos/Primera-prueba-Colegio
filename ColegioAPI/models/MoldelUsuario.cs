@@ -4,9 +4,9 @@ namespace ColegioAPI.models
 {
     public class User
     {
-        public int Id { get; set; }
-        public string NombreUsuario { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-        public string Rol { get; set; } = string.Empty;
+        public required int Id { get; set; }
+        public required string NombreUsuario { get; set; } = string.Empty;
+        public required string Password { get; set; } = string.Empty;
+        public required string Rol { get; set; } = string.Empty;
     }
 }

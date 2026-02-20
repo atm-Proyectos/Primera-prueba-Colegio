@@ -16,12 +16,21 @@ describe('AsignaturasComponent', () => {
 
   // 1. MOCK SERVICIO (Incluimos guardar, editar y eliminar)
   const mockApiService = jasmine.createSpyObj('ApiService', [
+    'soyAdmin',
+    'soyProfesor',
+    'soyAlumno',
+    'getRol',
     'getAsignaturas',
+    'getProfesores',
     'guardarAsignatura',
     'editarAsignatura',
     'eliminarAsignatura'
   ]);
-
+  mockApiService.getProfesores.and.returnValue(of([]));
+  mockApiService.soyAdmin.and.returnValue(true);
+  mockApiService.soyProfesor.and.returnValue(false);
+  mockApiService.soyAlumno.and.returnValue(false);
+  mockApiService.getRol.and.returnValue('Admin');
   mockApiService.getAsignaturas.and.returnValue(of([]));
   mockApiService.guardarAsignatura.and.returnValue(of({}));
   mockApiService.editarAsignatura.and.returnValue(of({}));
@@ -51,8 +60,8 @@ describe('AsignaturasComponent', () => {
   // --- TEST VISUAL: TABLA ---
   it('debería mostrar 2 filas si el Store tiene Matemáticas e Historia', () => {
     const dummyData = [
-      { id: 1, clase: 'Matemáticas', profesor: 'Newton' },
-      { id: 2, clase: 'Historia', profesor: 'Heródoto' }
+      { Id: 1, Clase: 'Matemáticas', Profesor: 'Newton' },
+      { Id: 2, Clase: 'Historia', Profesor: 'Heródoto' }
     ];
 
     store.setState({
@@ -67,7 +76,7 @@ describe('AsignaturasComponent', () => {
 
   // --- TEST INTERACCIÓN: BORRAR ---
   it('debería llamar a eliminar(10) al pulsar el botón de borrar', () => {
-    const dummyData = [{ id: 10, clase: 'Física', profesor: 'Einstein' }];
+    const dummyData = [{ Id: 10, Clase: 'Física', Profesor: 'Einstein' }];
 
     store.setState({
       asignaturas: { loading: false, asignaturas: dummyData, error: null }

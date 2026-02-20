@@ -66,12 +66,13 @@ export class DashboarProfesorComponent implements OnInit {
     this.api.getStatsProfesor().subscribe({
       next: (data: any) => {
         this.stats = data;
-        this.mejorAlumno = data.mejorAlumno;
-        this.peorAlumno = data.peorAlumno;
-        this.alumnosEnRiesgo = data.alumnosEnRiesgo;
-        this.ratioAprobados = data.aprobadosVsSuspensos;
-        this.alumnosPendientes = data.pendientes;
-        this.progresoCorreccion = data.progresoCorreccion;
+        // Sincronización con PascalCase del Backend ✨
+        this.mejorAlumno = data.MejorAlumno || { Nombre: 'N/A', Valor: '-' };
+        this.peorAlumno = data.PeorAlumno || { Nombre: 'N/A', Valor: '-' };
+        this.alumnosEnRiesgo = data.AlumnosEnRiesgo || [];
+        this.ratioAprobados = data.AprobadosVsSuspensos || [];
+        this.alumnosPendientes = data.Pendientes || [];
+        this.progresoCorreccion = data.ProgresoCorreccion || [];
         this.cargando = false;
       },
       error: (err) => {

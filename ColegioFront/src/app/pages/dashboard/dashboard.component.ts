@@ -45,7 +45,11 @@ export class DashboardComponent implements OnInit {
           alumnosPorAsignatura: this.validarGrafica(data.alumnosPorAsignatura),
           notaMediaPorAsignatura: this.validarGrafica(data.notaMediaPorAsignatura),
           distribucionEdades: this.validarGrafica(data.distribucionEdades),
-          aprobadosVsSuspensos: this.validarGrafica(data.aprobadosVsSuspensos)
+          aprobadosVsSuspensos: this.validarGrafica(data.aprobadosVsSuspensos),
+          MediaPorAsignatura: this.validarGrafica(data.MediaPorAsignatura),
+          TotalAlumnos: this.validarGrafica(data.TotalAlumnos),
+          TotalAsignaturas: this.validarGrafica(data.TotalAsignaturas),
+          EdadMediaGlobal: this.validarGrafica(data.EdadMediaGlobal),
         };
       })
     );

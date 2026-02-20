@@ -1,6 +1,6 @@
 export interface Asignaturas {
-    id: number;
-    clase: string;
-    profesor: string;
-    matriculaId?: number;
+    Id: number;
+    Clase: string;
+    Profesor: string;
+    MatriculaId?: number;
 }

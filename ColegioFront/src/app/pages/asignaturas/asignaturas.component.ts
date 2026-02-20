@@ -17,14 +17,14 @@ export class AsignaturasComponent implements OnInit {
   error$: Observable<any>;
 
   // Variables formulario Asignatura (existente)
-  formAsignatura: any = { id: 0, clase: "", profesor: "" };
+  formAsignatura: any = { Id: 0, Clase: "", Profesor: "" };
   mostrarModal: boolean = false;
   listaProfesores: any[] = [];
   mensajeError: string = "";
 
   // Variables formulario Nuevo Profesor (Simplificado)
   mostrarModalProfesor: boolean = false;
-  formProfesor: any = { nombre: "", asignaturaInicial: "" };
+  formProfesor: any = { Nombre: "", AsignaturaInicial: "" };
 
   constructor(
     public api: ApiService,
@@ -65,18 +65,18 @@ export class AsignaturasComponent implements OnInit {
       const miUsuarioLimpio = limpiar(usuario || '');
 
       const yo = todos.find((a: any) => {
-        const nombreCompletoBD = limpiar(a.nombre + ' ' + a.apellido);
+        const nombreCompletoBD = limpiar(a.Nombre + ' ' + a.Apellido);
         // Debug opcional para ver que ahora sí coinciden
         // console.log(`Comparando: ${miUsuarioLimpio} vs ${nombreCompletoBD}`); 
         return nombreCompletoBD === miUsuarioLimpio;
       });
 
       if (yo) {
-        this.api.matricular(yo.id, asignatura.id).subscribe({
+        this.api.matricular(yo.Id, asignatura.Id).subscribe({
           next: () => {
             Swal.fire({
               title: '¡Apuntado!',
-              text: `Te has matriculado en ${asignatura.clase}`,
+              text: `Te has matriculado en ${asignatura.Clase}`,
               icon: 'success',
               timer: 2000,
               showConfirmButton: false
@@ -106,11 +106,11 @@ export class AsignaturasComponent implements OnInit {
   }
 
   desmatricularse(asignatura: any) {
-    if (!asignatura.matriculaId) return;
+    if (!asignatura.MatriculaId) return;
 
     Swal.fire({
       title: '¿Darte de baja?',
-      text: `Saldrás de la clase de ${asignatura.clase}`,
+      text: `Saldrás de la clase de ${asignatura.Clase}`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#e74c3c',
@@ -119,7 +119,7 @@ export class AsignaturasComponent implements OnInit {
     }).then((res) => {
       if (res.isConfirmed) {
         // Usamos el ID de la matrícula que nos dio el Backend en el DTO
-        this.api.eliminarMatricula(asignatura.matriculaId).subscribe({
+        this.api.eliminarMatricula(asignatura.MatriculaId).subscribe({
           next: () => {
             Swal.fire('Hecho', 'Te has desmatriculado correctamente', 'success');
             // Recargamos la tabla para que el botón vuelva a ser VERDE
@@ -149,7 +149,7 @@ export class AsignaturasComponent implements OnInit {
   // ==========================================
 
   abrirModalCrear() {
-    this.formAsignatura = { id: 0, clase: "", profesor: "" };
+    this.formAsignatura = { Id: 0, Clase: "", Profesor: "" };
     this.mostrarModal = true;
   }
 
@@ -163,14 +163,14 @@ export class AsignaturasComponent implements OnInit {
   }
 
   guardar() {
-    if (this.formAsignatura.id === 0) {
+    if (this.formAsignatura.Id === 0) {
       this.api.guardarAsignatura(this.formAsignatura).subscribe(() => {
         this.cerrarModal();
         this.store.dispatch(cargarAsignaturas());
         Swal.fire('Creado', 'Asignatura creada con éxito', 'success');
       });
     } else {
-      this.api.editarAsignatura(this.formAsignatura.id, this.formAsignatura).subscribe(() => {
+      this.api.editarAsignatura(this.formAsignatura.Id, this.formAsignatura).subscribe(() => {
         this.cerrarModal();
         this.store.dispatch(cargarAsignaturas());
         Swal.fire('Actualizado', 'Asignatura editada con éxito', 'success');
@@ -178,7 +178,7 @@ export class AsignaturasComponent implements OnInit {
     }
   }
 
-  eliminar(id: number) {
+  eliminar(Id: number) {
     Swal.fire({
       title: '¿Estás seguro?',
       text: "Se borrará la asignatura permanentemente",
@@ -188,7 +188,7 @@ export class AsignaturasComponent implements OnInit {
       confirmButtonText: 'Sí, borrar'
     }).then((result) => {
       if (result.isConfirmed) {
-        this.api.eliminarAsignatura(id).subscribe(() => {
+        this.api.eliminarAsignatura(Id).subscribe(() => {
           this.store.dispatch(cargarAsignaturas());
           Swal.fire('Borrado', 'La asignatura ha sido eliminada.', 'success');
         });
@@ -201,7 +201,7 @@ export class AsignaturasComponent implements OnInit {
   // ==========================================
 
   abrirModalNuevoProfesor() {
-    this.formProfesor = { nombre: "", asignaturaInicial: "" };
+    this.formProfesor = { Nombre: "", AsignaturaInicial: "" };
     this.mostrarModalProfesor = true;
   }
 
@@ -210,14 +210,14 @@ export class AsignaturasComponent implements OnInit {
   }
 
   crearProfesorYAsignatura() {
-    if (!this.formProfesor.nombre || !this.formProfesor.asignaturaInicial) {
+    if (!this.formProfesor.Nombre || !this.formProfesor.AsignaturaInicial) {
       Swal.fire('Atención', 'Nombre y Asignatura son obligatorios', 'warning');
       return;
     }
 
     const datosEnvio = {
-      nombre: this.formProfesor.nombre,
-      asignaturaInicial: this.formProfesor.asignaturaInicial
+      Nombre: this.formProfesor.Nombre,
+      AsignaturaInicial: this.formProfesor.AsignaturaInicial
     };
 
     this.api.crearProfesor(datosEnvio).subscribe({

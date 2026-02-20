@@ -15,14 +15,15 @@
             </div>
             <div class="card-kpi green">
                 <h3>🏆 Mejor Nota</h3>
-                <p class="numero">{{ mejorAlumno.valor }}</p>
-                <small>{{ mejorAlumno.nombre }}</small>
+                <p class="numero">{{ mejorAlumno?.Valor }}</p>
+                <small>{{ mejorAlumno?.Nombre }}</small>
             </div>
             <div class="card-kpi red">
                 <h3>📉 Peor Nota</h3>
-                <p class="numero">{{ peorAlumno.valor }}</p>
-                <small>{{ peorAlumno.nombre }}</small>
+                <p class="numero">{{ peorAlumno?.Valor }}</p>
+                <small>{{ peorAlumno?.Nombre }}</small>
             </div>
+
         </div>
 
         <div class="dashboard-grid">
@@ -37,7 +38,7 @@
                 </div>
                 <ul *ngIf="alumnosEnRiesgo.length > 0" class="lista-riesgo">
                     <li *ngFor="let item of alumnosEnRiesgo">
-                        <strong>{{ item.nombre }}</strong> <span class="badge-suspenso">{{ item.valor }}</span>
+                        <strong>{{ item.Nombre }}</strong> <span class="badge-suspenso">{{ item.Valor }}</span>
                     </li>
                 </ul>
             </div>
@@ -58,8 +59,8 @@
                 </div>
                 <ul class="lista-simple" *ngIf="alumnosPendientes.length > 0">
                     <li *ngFor="let p of alumnosPendientes">
-                        <span>{{ p.nombre }}</span>
-                        <small style="color: #666;">({{ p.asignatura }})</small>
+                        <span>{{ p.Nombre }}</span>
+                        <small style="color: #666;">({{ p.Asignatura }})</small>
                     </li>
                 </ul>
             </div>

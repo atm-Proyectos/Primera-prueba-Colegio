@@ -22,7 +22,11 @@ describe('AlumnosComponent', () => {
     'editarAlumno',
     'eliminarAlumno',
     'matricular',
-    'desmatricular'
+    'desmatricular',
+    'soyProfesor',
+    'soyAdmin',
+    'soyAlumno',
+    'getUserName'
   ]);
 
   mockApiService.getAlumnos.and.returnValue(of([]));
@@ -33,6 +37,10 @@ describe('AlumnosComponent', () => {
   mockApiService.eliminarAlumno.and.returnValue(of({}));
   mockApiService.matricular.and.returnValue(of({}));
   mockApiService.desmatricular.and.returnValue(of({}));
+  mockApiService.soyProfesor.and.returnValue(of(false));
+  mockApiService.soyAdmin.and.returnValue(of(true));
+  mockApiService.soyAlumno.and.returnValue(of(false));
+  mockApiService.getUserName.and.returnValue('Ignacio');
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -60,8 +68,8 @@ describe('AlumnosComponent', () => {
   // --- TEST 2: Visual (Tabla) ---
   it('debería mostrar una tabla con 2 alumnos cuando el Store tiene datos', () => {
     const dummyAlumnos = [
-      { id: 1, nombre: 'Ignacio', apellido: 'Garcia', edad: 25 },
-      { id: 2, nombre: 'Maria', apellido: 'Lopez', edad: 22 }
+      { Id: 1, Nombre: 'Ignacio', Apellido: 'Garcia', Edad: 25 },
+      { Id: 2, Nombre: 'Maria', Apellido: 'Lopez', Edad: 22 }
     ];
 
     store.setState({
@@ -85,7 +93,7 @@ describe('AlumnosComponent', () => {
 
   // --- TEST 3: Interacción (Click Borrar) ---
   it('debería llamar a la función eliminar() al hacer click en el botón de borrar', () => {
-    const unAlumno = [{ id: 1, nombre: 'Draco', apellido: 'Malfoy', edad: 12 }];
+    const unAlumno = [{ Id: 1, Nombre: 'Ignacio', Apellido: 'Garcia', Edad: 25 }];
 
     store.setState({
       alumnos: { alumnos: unAlumno, loading: false, error: null }
@@ -103,32 +111,29 @@ describe('AlumnosComponent', () => {
   });
 
   // --- MODAL Y MATRICULACIÓN ---
+  // Busca el test de matriculación y cámbialo por este:
   it('debería abrir el modal, seleccionar asignatura y matricular', () => {
-    const alumno = { id: 1, nombre: 'Marcos', apellido: 'Garcia', edad: 11 };
-    const asignatura = { id: 99, clase: 'Matemáticas', profesor: 'Juan' };
+    // ✅ Unificado a Id (Mayúscula)
+    const alumno = { Id: 1, Nombre: 'Marcos', Apellido: 'Garcia', Edad: 11 };
+    const asignatura = { Id: 99, Clase: 'Matemáticas', Profesor: 'Juan' };
 
     component.listaAsignaturas = [asignatura];
-    component.listaMatriculas = []; // Sin matrículas previas
+    component.listaMatriculas = [];
 
-    // 2. Ejecutar: Abrimos el modal
     component.abrirMatriculas(alumno);
     fixture.detectChanges();
 
-    // Verificamos que el modal ha aparecido (buscando la clase .modal-overlay)
     const modal = fixture.debugElement.query(By.css('.modal-overlay'));
     expect(modal).toBeTruthy();
 
-    // 3. Simular que el usuario elige "Matemáticas" en el select
     component.asignaturaParaMatricular = 99;
     fixture.detectChanges();
 
-    // 4. Buscar botón "Añadir" dentro del modal y hacer click
     const btnAdd = modal.query(By.css('.btn-guardar'));
     btnAdd.nativeElement.click();
 
-    // 5. Verificar que se llamó a la API con: ID Alumno (1) e ID Asignatura (99)
-    const apiSpy = TestBed.inject(ApiService);
-    expect(apiSpy.matricular).toHaveBeenCalledWith(1, 99);
+    // ✅ El espía ahora recibirá (1, 99) en lugar de (undefined, 99)
+    expect(mockApiService.matricular).toHaveBeenCalledWith(1, 99);
   });
 
 });

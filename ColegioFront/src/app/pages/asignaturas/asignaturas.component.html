@@ -1,16 +1,10 @@
 <div class="dashboard-panel">
-
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h2>📚 Gestión de Asignaturas</h2>
-
         <div *ngIf="!api.soyAlumno()" style="display: flex; gap: 10px;">
-            <button class="btn-nuevo" (click)="abrirModalCrear()">
-                ➕ Añadir Asignatura
-            </button>
-
-            <button *ngIf="api.soyAdmin()" class="btn-profesor" (click)="abrirModalNuevoProfesor()">
-                👨‍🏫 Nuevo Profesor
-            </button>
+            <button class="btn-nuevo" (click)="abrirModalCrear()">➕ Añadir Asignatura</button>
+            <button *ngIf="api.soyAdmin()" class="btn-profesor" (click)="abrirModalNuevoProfesor()">👨‍🏫 Nuevo
+                Profesor</button>
         </div>
     </div>
 
@@ -29,30 +23,20 @@
         </thead>
         <tbody>
             <tr *ngFor="let asig of asignaturas$ | async">
-                <td>{{ asig.clase }}</td>
-                <td>{{ asig.profesor || '---' }}</td>
-
+                <td>{{ asig.Clase }}</td>
+                <td>{{ asig.Profesor || '---' }}</td>
                 <td style="text-align: center;">
-
                     <ng-container *ngIf="api.soyAdmin() || api.soyProfesor()">
                         <button (click)="editar(asig)" class="btn-editar" title="Editar">✏️</button>
-                        <button *ngIf="api.soyAdmin()" (click)="eliminar(asig.id)" class="btn-borrar"
+                        <button *ngIf="api.soyAdmin()" (click)="eliminar(asig.Id)" class="btn-borrar"
                             title="Borrar">🗑️</button>
                     </ng-container>
-
                     <ng-container *ngIf="api.soyAlumno()">
-
-                        <button *ngIf="!asig.matriculaId" (click)="matricularse(asig)" class="btn-nuevo"
-                            style="padding: 5px 10px; font-size: 0.9rem;">
-                            ➕ Matricularme
-                        </button>
-
-                        <button *ngIf="asig.matriculaId" (click)="desmatricularse(asig)" class="btn-borrar">
-                            ❌ Dejar Asignatura
-                        </button>
-
+                        <button *ngIf="!asig.MatriculaId" (click)="matricularse(asig)" class="btn-nuevo">➕
+                            Matricularme</button>
+                        <button *ngIf="asig.MatriculaId" (click)="desmatricularse(asig)" class="btn-borrar">❌ Dejar
+                            Asignatura</button>
                     </ng-container>
-
                 </td>
             </tr>
         </tbody>
@@ -60,13 +44,13 @@
 
     <div class="modal-overlay" *ngIf="mostrarModal">
         <div class="modal-content animate-fade-in">
-            <h3>{{ formAsignatura.id === 0 ? 'Nueva Asignatura' : 'Editar Asignatura' }}</h3>
+            <h3>{{ formAsignatura.Id === 0 ? 'Nueva Asignatura' : 'Editar Asignatura' }}</h3>
             <form (ngSubmit)="guardar()">
                 <label class="label-form">Nombre de la Clase:</label>
-                <input type="text" [(ngModel)]="formAsignatura.clase" name="clase" class="input-form" required>
+                <input type="text" [(ngModel)]="formAsignatura.Clase" name="clase" class="input-form" required>
 
                 <label class="label-form">Profesor:</label>
-                <select [(ngModel)]="formAsignatura.profesor" name="profesor" class="input-form" required>
+                <select [(ngModel)]="formAsignatura.Profesor" name="profesor" class="input-form" required>
                     <option value="">-- Sin asignar --</option>
                     <option *ngFor="let prof of listaProfesores" [value]="prof.nombre">
                         {{ prof.nombre }}
@@ -88,11 +72,11 @@
 
             <form (ngSubmit)="crearProfesorYAsignatura()">
                 <label class="label-form">Nombre del Profesor:</label>
-                <input type="text" [(ngModel)]="formProfesor.nombre" name="nombreProf" class="input-form"
+                <input type="text" [(ngModel)]="formProfesor.Nombre" name="nombreProf" class="input-form"
                     placeholder="Ej: Juan Pérez" required>
 
                 <label class="label-form">Asignatura a impartir:</label>
-                <input type="text" [(ngModel)]="formProfesor.asignaturaInicial" name="asigInicial" class="input-form"
+                <input type="text" [(ngModel)]="formProfesor.AsignaturaInicial" name="asigInicial" class="input-form"
                     placeholder="Ej: Física Cuántica" required>
 
                 <div class="botones-modal">

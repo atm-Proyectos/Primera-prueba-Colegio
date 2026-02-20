@@ -16,6 +16,6 @@ namespace ColegioAPI.models
         public string Profesor { get; set; } = string.Empty;
 
         [JsonIgnore]
-        public List<AsignaturaAlumno>? AsignaturaAlumnos { get; set; }
+        public required List<AsignaturaAlumno>? AsignaturaAlumnos { get; set; }
     }
 }

@@ -51,6 +51,7 @@ namespace ColegioAPI.Controllers
             // 2. Guardar el Profesor
             var nuevoProfesor = new Profesores
             {
+                Id = 0,
                 Nombre = datos.Nombre
             };
             _context.Profesores.Add(nuevoProfesor);
@@ -71,6 +72,7 @@ namespace ColegioAPI.Controllers
 
             var nuevoUsuario = new User
             {
+                Id = 0,
                 NombreUsuario = nombreUsuario,
                 Password = passwordHash,
                 Rol = "Profesor"
@@ -80,8 +82,10 @@ namespace ColegioAPI.Controllers
             // 4. CREAR LA ASIGNATURA VINCULADA AL USUARIO CREADO
             var nuevaAsignatura = new Asignaturas
             {
+                Id = 0,
                 Clase = datos.AsignaturaInicial,
-                Profesor = nombreUsuario // Aquí está la magia: vinculamos al usuario generado
+                Profesor = nombreUsuario, // vinculamos al usuario generado
+                AsignaturaAlumnos = new List<AsignaturaAlumno>()
             };
             _context.Asignaturas.Add(nuevaAsignatura);
 

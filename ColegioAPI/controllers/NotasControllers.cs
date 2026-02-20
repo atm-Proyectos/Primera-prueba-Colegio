@@ -154,28 +154,25 @@ namespace ColegioAPI.Controllers
         [Authorize(Roles = "Admin,Profesor")]
         public async Task<ActionResult<Notas>> PostNota(Notas nota)
         {
-            _context.Notas.Add(nota);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetNotas), new { id = nota.Id }, nota);
-        }
-
-        // PUT: api/Notas/5
-        [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Profesor")]
-        public async Task<IActionResult> PutNota(int id, Notas nota)
-        {
-            if (id != nota.Id) return BadRequest();
-
-            _context.Entry(nota).State = EntityState.Modified;
-
-            try { await _context.SaveChangesAsync(); }
-            catch (DbUpdateConcurrencyException)
+            // 1. Validación manual de rango 📏
+            if (nota.Valor < 0 || nota.Valor > 10)
             {
-                if (!_context.Notas.Any(e => e.Id == id)) return NotFound();
-                else throw;
+                return BadRequest(new { mensaje = "¡Error! La nota debe estar entre 0 y 10." });
             }
 
-            return NoContent();
+            // 2. Validación de existencia de matrícula 🛡️
+            var existeMatricula = await _context.Asignatura_Alumnos
+                .AnyAsync(aa => aa.Id == nota.AsignaturaAlumnoId);
+
+            if (!existeMatricula)
+            {
+                return BadRequest(new { mensaje = "La matrícula especificada no existe." });
+            }
+
+            _context.Notas.Add(nota);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetNotas), new { id = nota.Id }, nota);
         }
 
         // DELETE

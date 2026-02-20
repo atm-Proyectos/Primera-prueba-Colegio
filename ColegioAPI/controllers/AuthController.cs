@@ -37,6 +37,7 @@ namespace ColegioAPI.Controllers
 
             var user = new User
             {
+                Id = 0,
                 NombreUsuario = nombreNormalizado,
                 Password = passwordHash,
                 Rol = request.Rol
@@ -108,6 +109,7 @@ namespace ColegioAPI.Controllers
         {
             List<Claim> claims = new List<Claim>
             {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.NombreUsuario),
                 new Claim(ClaimTypes.Role, user.Rol)
             };

@@ -30,7 +30,7 @@ export class NotasComponent implements OnInit {
   mensajeError: string = "";
   cargando: boolean = true;
 
-  formSeleccion: any = { alumnoId: null, asignaturaId: null };
+  formSeleccion: any = { AlumnoId: null, AsignaturaId: null };
   valorNota: number | null = null; // Iniciamos en null
   notaIdEditar: number = 0;
 
@@ -70,27 +70,27 @@ export class NotasComponent implements OnInit {
 
   // 1. Esta función se llama cuando TU cambias el select manualmente
   alCambiarAlumno() {
-    const alumnoId = this.formSeleccion.alumnoId;
+    const AlumnoId = this.formSeleccion.AlumnoId;
 
     // Cargamos la lista
-    this.cargarAsignaturasParaAlumno(alumnoId);
+    this.cargarAsignaturasParaAlumno(AlumnoId);
 
     // Como has cambiado de alumno manualmente, reseteamos la asignatura
-    this.formSeleccion.asignaturaId = null;
+    this.formSeleccion.AsignaturaId = null;
   }
 
   // 2. Función auxiliar para reutilizar lógica (sin borrar selecciones)
-  cargarAsignaturasParaAlumno(alumnoId: number) {
-    if (alumnoId) {
+  cargarAsignaturasParaAlumno(AlumnoId: number) {
+    if (AlumnoId) {
       // Filtramos las matrículas de ese alumno
-      const matriculasDelAlumno = this.listaMatriculas.filter(m => m.alumnoId == alumnoId);
+      const matriculasDelAlumno = this.listaMatriculas.filter(m => m.AlumnoId == AlumnoId);
 
       // Cruzamos con la lista de asignaturas para sacar el nombre
       this.listaAsignaturasDelAlumno = matriculasDelAlumno.map(m => {
-        const asignaturaOriginal = this.listaAsignaturas.find(a => a.id == m.asignaturaId);
+        const asignaturaOriginal = this.listaAsignaturas.find(a => a.Id == m.AsignaturaId);
         return {
-          id: m.asignaturaId,
-          nombre: asignaturaOriginal ? asignaturaOriginal.clase : ('Asignatura ' + m.asignaturaId)
+          Id: m.AsignaturaId,
+          Nombre: asignaturaOriginal ? asignaturaOriginal.Clase : ('Asignatura ' + m.AsignaturaId)
         };
       });
     } else {
@@ -127,7 +127,7 @@ export class NotasComponent implements OnInit {
   // --- GUARDAR / ACTUALIZAR ---
   guardar() {
     // Validaciones previas
-    if (!this.formSeleccion.alumnoId || !this.formSeleccion.asignaturaId) {
+    if (!this.formSeleccion.AlumnoId || !this.formSeleccion.AsignaturaId) {
       this.mensajeError = "Selecciona alumno y asignatura.";
       return;
     }
@@ -138,8 +138,8 @@ export class NotasComponent implements OnInit {
 
     // Buscamos el ID de la matrícula (AsignaturaAlumnoId)
     const matricula = this.listaMatriculas.find(
-      m => m.alumnoId == this.formSeleccion.alumnoId &&
-        m.asignaturaId == this.formSeleccion.asignaturaId
+      m => m.AlumnoId == this.formSeleccion.AlumnoId &&
+        m.AsignaturaId == this.formSeleccion.AsignaturaId
     );
 
     if (!matricula) {
@@ -149,9 +149,9 @@ export class NotasComponent implements OnInit {
 
     // Objeto a enviar
     const notaAGuardar = {
-      id: this.notaIdEditar, // 0 si es nueva, ID si es editar
-      valor: this.valorNota, // Usamos la variable vinculada
-      asignaturaAlumnoId: matricula.id
+      Id: this.notaIdEditar, // 0 si es nueva, ID si es editar
+      Valor: this.valorNota, // Usamos la variable vinculada
+      AsignaturaAlumnoId: matricula.Id
     };
 
     if (this.notaIdEditar === 0) {
@@ -179,27 +179,27 @@ export class NotasComponent implements OnInit {
 
   // --- EDITAR ---
   editar(nota: any) {
-    this.notaIdEditar = nota.id;
-    this.valorNota = nota.valor;
+    this.notaIdEditar = nota.Id;
+    this.valorNota = nota.Valor;
 
     // Buscamos la matrícula basada en la relación guardada en la nota
     // Esto es más seguro que buscar por IDs sueltos
-    let matricula = this.listaMatriculas.find(m => m.id === nota.asignaturaAlumnoId);
+    let matricula = this.listaMatriculas.find(m => m.Id === nota.AsignaturaAlumnoId);
 
     // Fallback: Si no viene asignaturaAlumnoId, intentamos buscar por los objetos anidados (si tu API los devuelve)
-    if (!matricula && nota.asignaturaAlumno) {
-      matricula = this.listaMatriculas.find(m => m.id === nota.asignaturaAlumno.id);
+    if (!matricula && nota.AsignaturaAlumno) {
+      matricula = this.listaMatriculas.find(m => m.Id === nota.AsignaturaAlumno.Id);
     }
 
     if (matricula) {
       // 1. Seteamos Alumno
-      this.formSeleccion.alumnoId = matricula.alumnoId;
+      this.formSeleccion.AlumnoId = matricula.AlumnoId;
 
       // 2. Cargamos sus asignaturas SIN borrar la selección (usamos la función auxiliar)
-      this.cargarAsignaturasParaAlumno(matricula.alumnoId);
+      this.cargarAsignaturasParaAlumno(matricula.AlumnoId);
 
       // 3. Seteamos Asignatura
-      this.formSeleccion.asignaturaId = matricula.asignaturaId;
+      this.formSeleccion.AsignaturaId = matricula.AsignaturaId;
     } else {
       console.warn("No se encontró la matrícula para editar esta nota");
     }
@@ -216,7 +216,7 @@ export class NotasComponent implements OnInit {
   limpiar() {
     this.notaIdEditar = 0;
     this.valorNota = null;
-    this.formSeleccion = { alumnoId: null, asignaturaId: null };
+    this.formSeleccion = { AlumnoId: null, AsignaturaId: null };
     this.listaAsignaturasDelAlumno = [];
     this.mensajeError = "";
     if (this.formNotas) {
@@ -224,7 +224,7 @@ export class NotasComponent implements OnInit {
     }
   }
 
-  eliminar(id: number) {
+  eliminar(Id: number) {
     Swal.fire({
       title: '¿Borrar nota?',
       text: "Esta acción no se puede deshacer.",
@@ -235,7 +235,7 @@ export class NotasComponent implements OnInit {
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
-        this.api.eliminarNota(id).subscribe({
+        this.api.eliminarNota(Id).subscribe({
           next: () => {
             Swal.fire('Borrado', 'La nota ha sido eliminada.', 'success');
             this.store.dispatch(cargarNotas());

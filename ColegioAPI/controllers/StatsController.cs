@@ -60,22 +60,22 @@ namespace ColegioAPI.Controllers
                 sinCalificar,
                 // Datos para la tarta 🥧
                 statsTarta = new[] {
-            new { name = "Aprobadas", value = aprobadas },
-            new { name = "Suspensas", value = suspensas },
-            new { name = "Sin Calificar", value = sinCalificar }
+            new { Name = "Aprobadas", Value = aprobadas },
+            new { Name = "Suspensas", Value = suspensas },
+            new { Name = "Sin Calificar", Value = sinCalificar }
         },
 
                 // Datos para las barras 📊
                 graficaNotas = matriculasConNota.Select(aa => new
                 {
-                    name = aa.Asignatura?.Clase ?? "Asignatura",
-                    value = aa.Notas!.Valor
+                    Name = aa.Asignatura?.Clase ?? "Asignatura",
+                    Value = aa.Notas!.Valor
                 }),
                 // Lista de asignaturas matriculadas
                 asignaturas = alumno.AsignaturaAlumnos.Select(aa => new
                 {
-                    nombre = aa.Asignatura?.Clase,
-                    profesor = aa.Asignatura?.Profesor
+                    Nombre = aa.Asignatura?.Clase,
+                    Profesor = aa.Asignatura?.Profesor
                 })
             });
         }
@@ -130,6 +130,7 @@ namespace ColegioAPI.Controllers
             var pendientesData = misMatriculas.Where(m => !idsConNota.Contains(m.Id))
                 .Select(m => new
                 {
+                    id = m.Id,
                     nombre = m.Alumno != null ? $"{m.Alumno.Nombre} {m.Alumno.Apellido}" : "Sin nombre",
                     asignatura = m.Asignatura?.Clase ?? "N/A"
                 }).ToList();
@@ -145,36 +146,39 @@ namespace ColegioAPI.Controllers
 
                 mejorAlumno = new
                 {
-                    nombre = mejorNotaObj?.AsignaturaAlumno?.Alumno != null ? $"{mejorNotaObj.AsignaturaAlumno.Alumno.Nombre} {mejorNotaObj.AsignaturaAlumno.Alumno.Apellido}" : "N/A",
-                    valor = mejorNotaObj?.Valor ?? 0m
+                    Id = mejorNotaObj?.Id ?? 0,
+                    Nombre = mejorNotaObj?.AsignaturaAlumno?.Alumno != null ? $"{mejorNotaObj.AsignaturaAlumno.Alumno.Nombre} {mejorNotaObj.AsignaturaAlumno.Alumno.Apellido}" : "N/A",
+                    Valor = mejorNotaObj?.Valor ?? 0m
                 },
                 peorAlumno = new
                 {
-                    nombre = peorNotaObj?.AsignaturaAlumno?.Alumno != null ? $"{peorNotaObj.AsignaturaAlumno.Alumno.Nombre} {peorNotaObj.AsignaturaAlumno.Alumno.Apellido}" : "N/A",
-                    valor = peorNotaObj?.Valor ?? 0m
+                    Id = peorNotaObj?.Id ?? 0,
+                    Nombre = peorNotaObj?.AsignaturaAlumno?.Alumno != null ? $"{peorNotaObj.AsignaturaAlumno.Alumno.Nombre} {peorNotaObj.AsignaturaAlumno.Alumno.Apellido}" : "N/A",
+                    Valor = peorNotaObj?.Valor ?? 0m
                 },
 
                 alumnosEnRiesgo = misNotas.Where(n => n.Valor < 5).Select(n => new
                 {
-                    nombre = n.AsignaturaAlumno?.Alumno != null ? $"{n.AsignaturaAlumno.Alumno.Nombre} {n.AsignaturaAlumno.Alumno.Apellido}" : "Desconocido",
-                    valor = n.Valor
+                    Id = n.Id,
+                    Nombre = n.AsignaturaAlumno?.Alumno != null ? $"{n.AsignaturaAlumno.Alumno.Nombre} {n.AsignaturaAlumno.Alumno.Apellido}" : "Desconocido",
+                    Valor = n.Valor
                 }).Take(5).ToList(),
 
                 aprobadosVsSuspensos = new[] {
-            new { name = "Aprobados", value = misNotas.Count(n => n.Valor >= 5) },
-            new { name = "Suspensos", value = misNotas.Count(n => n.Valor < 5) },
-            new { name = "Sin Calificar", value = pendientesData.Count }
+            new { Name = "Aprobados", Value = misNotas.Count(n => n.Valor >= 5) },
+            new { Name = "Suspensos", Value = misNotas.Count(n => n.Valor < 5) },
+            new { Name = "Sin Calificar", Value = pendientesData.Count }
         },
 
                 pendientes = pendientesData,
                 progresoCorreccion = new[] {
-            new { name = "Evaluados", value = misNotas.Count },
-            new { name = "Pendientes", value = pendientesData.Count }
+            new { Name = "Evaluados", Value = misNotas.Count },
+            new { Name = "Pendientes", Value = pendientesData.Count }
         },
                 alumnosPorAsignatura = misAsignaturas.Select(a => new
                 {
-                    name = a.Clase,
-                    value = misMatriculas.Count(m => m.AsignaturaId == a.Id)
+                    Name = a.Clase,
+                    Value = misMatriculas.Count(m => m.AsignaturaId == a.Id)
                 })
             });
         }
@@ -188,89 +192,71 @@ namespace ColegioAPI.Controllers
             var totalAlumnos = await _context.Alumnos.CountAsync();
             var totalAsignaturas = await _context.Asignaturas.CountAsync();
 
-            // 1. Cálculo de Edad Media (Directo desde el campo Edad)
             var alumnos = await _context.Alumnos.ToListAsync();
             double edadMedia = totalAlumnos > 0 ? alumnos.Average(a => (double)a.Edad) : 0;
 
-            // 2. Popularidad de Asignaturas
+            // 1. Popularidad: Corregido a Mayúsculas y campos required
             var alumnosPorAsignatura = await _context.Asignatura_Alumnos
                 .GroupBy(aa => aa.Asignatura.Clase)
-                .Select(g => new DatoGrafica { nombre = g.Key, valor = g.Count() })
+                .Select(g => new DatoGrafica
+                {
+                    Nombre = g.Key,
+                    Valor = g.Count(),
+                    ValorDecimal = 0,
+                    Asignatura = ""
+                })
                 .ToListAsync();
 
-            // 3. Distribución por Edades (Agrupando por el número de edad)
+            // 2. Distribución: Corregido el error de conversión int a string
             var distribucionEdades = alumnos
                 .GroupBy(a => a.Edad)
                 .Select(g => new DatoGrafica
                 {
-                    nombre = g.Key.ToString() + " años",
-                    valor = g.Count()
+                    Nombre = g.Key.ToString(), // Convertimos el número de edad a string
+                    Valor = g.Count(),
+                    ValorDecimal = 0,
+                    Asignatura = ""
                 })
-                .OrderBy(x => x.nombre)
+                .OrderBy(x => x.Nombre)
                 .ToList();
 
-            // 4. Nota Media por Asignatura
+            // 3. Nota Media
             var notasPorAsignatura = await _context.Notas
                 .Include(n => n.AsignaturaAlumno)
                 .ThenInclude(aa => aa.Asignatura)
                 .GroupBy(n => n.AsignaturaAlumno.Asignatura.Clase)
                 .Select(g => new DatoGrafica
                 {
-                    nombre = g.Key,
-                    // IMPORTANTE: Asignar a ValorDecimal casteando a double para no perder decimales
+                    Nombre = g.Key,
                     ValorDecimal = Math.Round(g.Average(n => (decimal)n.Valor), 1),
-                    // Rellenamos valor también por compatibilidad
-                    valor = (int)Math.Round(g.Average(n => n.Valor))
+                    Valor = (int)Math.Round(g.Average(n => (double)n.Valor)),
+                    Asignatura = ""
                 })
                 .ToListAsync();
 
-            // 5. Aprobados vs Suspensos
+            // 4. Aprobados vs Suspensos
             var totalAprobados = await _context.Notas.CountAsync(n => n.Valor >= 5);
             var totalSuspensos = await _context.Notas.CountAsync(n => n.Valor < 5);
             var aprobadosVsSuspensos = new List<DatoGrafica>
     {
-        new DatoGrafica { nombre = "Aprobados", valor = totalAprobados },
-        new DatoGrafica { nombre = "Suspensos", valor = totalSuspensos }
+        new DatoGrafica { Nombre = "Aprobados", Valor = totalAprobados, ValorDecimal = 0, Asignatura = "" },
+        new DatoGrafica { Nombre = "Suspensos", Valor = totalSuspensos, ValorDecimal = 0, Asignatura = "" }
     };
 
+            // 5. Retorno: Añadido campo obligatorio AsignaturasMatriculadas
             return Ok(new DashboardStats
             {
                 TotalAlumnos = totalAlumnos,
                 TotalAsignaturas = totalAsignaturas,
                 EdadMediaGlobal = Math.Round(edadMedia, 1),
-                AlumnosPorAsignatura = await _context.Asignatura_Alumnos
-                .GroupBy(aa => aa.Asignatura.Clase)
-                .Select(g => new DatoGrafica { nombre = g.Key, valor = g.Count() })
-                .ToListAsync(),
+                AlumnosPorAsignatura = alumnosPorAsignatura,
                 DistribucionEdades = distribucionEdades,
                 NotaMediaPorAsignatura = notasPorAsignatura,
-                AprobadosVsSuspensos = new List<DatoGrafica>
-    {
-        new DatoGrafica { nombre = "Aprobados", valor = totalAprobados },
-        new DatoGrafica { nombre = "Suspensos", valor = totalSuspensos }
-    }
+                AprobadosVsSuspensos = aprobadosVsSuspensos,
+                AsignaturasMatriculadas = new List<DatoGrafica>() // ✨ Requerido por el DTO
             });
         }
     }
-
-    // CLASES DTO
-    public class DashboardStats
-    {
-        public int TotalAlumnos { get; set; }
-        public int TotalAsignaturas { get; set; }
-        public double EdadMediaGlobal { get; set; }
-        public List<DatoGrafica> AlumnosPorAsignatura { get; set; } = new List<DatoGrafica>();
-        public List<DatoGrafica> DistribucionEdades { get; set; } = new List<DatoGrafica>();
-        public List<DatoGrafica> NotaMediaPorAsignatura { get; set; } = new List<DatoGrafica>();
-        public List<DatoGrafica> AprobadosVsSuspensos { get; set; } = new List<DatoGrafica>();
-        public List<DatoGrafica> AsignaturasMatriculadas { get; set; } = new List<DatoGrafica>();
-    }
-
-    public class DatoGrafica
-    {
-        public string nombre { get; set; }
-        public int valor { get; set; }
-        public decimal ValorDecimal { get; set; }
-        public string Asignatura { get; set; } = string.Empty;
-    }
 }
+
+

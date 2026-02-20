@@ -1,9 +1,9 @@
 export interface Notas {
-    id: number;
-    valor: number;
-    asignaturaAlumnoId: number;
-    alumno?: string;
-    asignatura?: string;
-    nombreAlumno?: string;
-    nombreAsignatura?: string;
+    Id: number;
+    Valor: number;
+    AsignaturaAlumnoId: number;
+    Alumno?: string;
+    Asignatura?: string;
+    NombreAlumno?: string;
+    NombreAsignatura?: string;
 }

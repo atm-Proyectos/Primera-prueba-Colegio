@@ -19,7 +19,8 @@
                     style="width: 100%;">
             </div>
 
-            <button type="submit" class="btn-guardar" style="width: 100%; justify-content: center;">
+            <button type="submit" class="btn-guardar" [disabled]="!usuario || !password"
+                style="width: 100%; justify-content: center;">
                 Ingresar ➜
             </button>
         </form>

@@ -54,6 +54,7 @@ namespace ColegioAPI.Controllers
             // 3. Crear Usuario
             var nuevoUsuario = new User
             {
+                Id = 0,
                 NombreUsuario = nombreNormalizado,
                 Password = BCrypt.Net.BCrypt.HashPassword("1234"),
                 Rol = "Alumno"

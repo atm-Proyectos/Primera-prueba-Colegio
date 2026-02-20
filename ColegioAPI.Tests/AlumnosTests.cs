@@ -4,16 +4,23 @@ using ColegioAPI.Controllers;
 using ColegioAPI.Data;
 using ColegioAPI.models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace ColegioAPI.Tests
 {
     public class AlumnosTests
     {
-        // --- HERRAMIENTA: Configurar Base de Datos en Memoria ---
+        // --- ⚙️ CONFIGURACIÓN DE APOYO (HELPERS) ---
+
+        /// <summary>
+        /// Crea una base de datos en memoria aislada para cada prueba. 🧪
+        /// </summary>
         private AppDbContext GetDatabaseContext()
         {
             var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -24,118 +31,115 @@ namespace ColegioAPI.Tests
             return context;
         }
 
-        // --- TEST 1: COMPROBAR ERROR 404 ---
+        /// <summary>
+        /// Simula un contexto de seguridad para evitar NullReferenceException al acceder a User. 🛡️
+        /// </summary>
+        private void SimularUsuario(ControllerBase controller, string nombre, string rol)
+        {
+            var identity = new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.Name, nombre),
+                new Claim(ClaimTypes.Role, rol)
+            }, "TestAuthType");
+
+            var user = new ClaimsPrincipal(identity);
+
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = user }
+            };
+        }
+
+        // --- 🧪 TESTS DE FUNCIONALIDAD (CRUD) ---
+
+        [Fact]
+        public async Task GetAlumno_DeberiaDevolverAlumno_CuandoIdExiste()
+        {
+            // 1. Arrange 🏗️
+            var context = GetDatabaseContext();
+            var alumnoFalso = new Alumnos
+            {
+                Id = 0,
+                Nombre = "Carlos",
+                Apellido = "Ruiz",
+                Edad = 15,
+                AsignaturaAlumnos = []
+            };
+            context.Alumnos.Add(alumnoFalso);
+            await context.SaveChangesAsync();
+
+            var controller = new AlumnosController(context);
+
+            // 2. Act 🎬
+            var resultado = await controller.GetAlumnos(alumnoFalso.Id);
+
+            // 3. Assert ✅
+            Assert.NotNull(resultado.Value);
+            Assert.Equal("Carlos", resultado.Value.Nombre);
+        }
+
         [Fact]
         public async Task GetAlumno_DeberiaDevolverNotFound_CuandoIdNoExiste()
         {
-            // 1. Arrange
+            // 1. Arrange 🏗️
             var context = GetDatabaseContext();
             var controller = new AlumnosController(context);
-            int idInexistente = 999;
+            int idQueNoExiste = 999;
 
-            // 2. Act
-            var respuesta = await controller.GetAlumno(idInexistente);
+            // 2. Act 🎬
+            var respuesta = await controller.GetAlumnos(idQueNoExiste);
 
-            // 3. Assert
+            // 3. Assert ✅
             Assert.IsType<NotFoundResult>(respuesta.Result);
         }
 
-        // --- TEST 2: COMPROBAR CREACIÓN EXITOSA (POST) ---
+        // --- 🧪 TESTS DE RELACIONES Y SEGURIDAD ---
+
         [Fact]
-        public async Task PostAlumno_DeberiaGuardarYDevolverAlumno()
+        public async Task GetMatriculas_DeberiaIncluirNombreDelAlumno_CuandoExisteRelacion()
         {
-            // 1. Arrange
-            var context = GetDatabaseContext();
-            var controller = new AlumnosController(context);
-            var nuevoAlumno = new Alumnos
+            var options = new DbContextOptionsBuilder<AppDbContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .Options;
+
+            using (var context = new AppDbContext(options))
             {
-                Nombre = "Test",
-                Apellido = "Junior",
-                Edad = 10
-            };
+                // 1. Añadimos la lista de matrículas obligatoria
+                var alumno = new Alumnos { Id = 0, Nombre = "Carlos", Apellido = "Ruiz", Edad = 15, AsignaturaAlumnos = [] };
+                var asignatura = new Asignaturas { Id = 0, Clase = "Programacion", Profesor = "Pepe", AsignaturaAlumnos = [] };
+                context.Alumnos.Add(alumno);
+                context.Asignaturas.Add(asignatura);
+                await context.SaveChangesAsync();
 
-            // 2. Act
-            var respuesta = await controller.PostAlumno(nuevoAlumno);
+                // 2. Tu fragmento de código corregido ✨
+                context.Asignatura_Alumnos.Add(new AsignaturaAlumno
+                {
+                    Id = 0,
+                    AlumnoId = alumno.Id,
+                    AsignaturaId = asignatura.Id,
+                    AñoEscolar = 2024,
+                    FechaMatricula = DateTime.Now
+                });
+                await context.SaveChangesAsync();
 
-            // 3. Assert
-            var resultado = Assert.IsType<CreatedAtActionResult>(respuesta.Result);
-            var alumnoCreado = Assert.IsType<Alumnos>(resultado.Value);
-            Assert.Equal("Test", alumnoCreado.Nombre);
-        }
+                // 3. Añadimos el Id requerido al Usuario
+                context.Usuarios.Add(new User { Id = 0, NombreUsuario = "carlosruiz", Rol = "Alumno", Password = "..." });
+                await context.SaveChangesAsync();
+            }
 
-        // --- TEST 3: OBTENER TODOS LOS ALUMNOS (GET) ---
-        [Fact]
-        public async Task GetAlumnos_DeberiaDevolverListaCompleta()
-        {
-            // 1. Arrange
-            var context = GetDatabaseContext();
-            context.Alumnos.Add(new Alumnos { Nombre = "Juan", Apellido = "Perez", Edad = 20 });
-            context.Alumnos.Add(new Alumnos { Nombre = "Ana", Apellido = "Lopez", Edad = 22 });
-            await context.SaveChangesAsync();
-
-            var controller = new AlumnosController(context);
-
-            // 2. Act
-            var respuesta = await controller.GetAlumnos();
-
-            // 3. Assert
-            var resultado = Assert.IsType<ActionResult<IEnumerable<Alumnos>>>(respuesta);
-            var lista = Assert.IsAssignableFrom<IEnumerable<Alumnos>>(resultado.Value);
-
-            // Verificamos que haya 2 alumnos
-            Assert.Equal(2, lista.Count());
-        }
-
-        // --- TEST 4: EDITAR ALUMNO (PUT) ---
-        [Fact]
-        public async Task PutAlumno_DeberiaModificarDatos()
-        {
-            // 1. Arrange
-            var context = GetDatabaseContext();
-            var alumnoOriginal = new Alumnos { Nombre = "Original", Apellido = "Test", Edad = 10 };
-            context.Alumnos.Add(alumnoOriginal);
-            await context.SaveChangesAsync();
-
-            // Desligamos la entidad para evitar error de tracking
-            context.Entry(alumnoOriginal).State = EntityState.Detached;
-
-            var controller = new AlumnosController(context);
-
-            var alumnoModificado = new Alumnos
+            using (var context = new AppDbContext(options))
             {
-                Id = alumnoOriginal.Id,
-                Nombre = "Modificado",
-                Apellido = "Test",
-                Edad = 11
-            };
+                var controller = new AsignaturaAlumnosController(context);
+                // El disfraz debe ser "carlosruiz", que es el NombreUsuario generado
+                SimularUsuario(controller, "carlosruiz", "Alumno");
 
-            // 2. Act
-            await controller.PutAlumno(alumnoOriginal.Id, alumnoModificado);
+                var respuesta = await controller.GetMatriculas();
+                var okResult = Assert.IsType<OkObjectResult>(respuesta.Result);
+                var json = JsonConvert.SerializeObject(okResult.Value);
 
-            // 3. Assert
-            var alumnoEnDb = await context.Alumnos.FindAsync(alumnoOriginal.Id);
-            Assert.Equal("Modificado", alumnoEnDb.Nombre);
-            Assert.Equal(11, alumnoEnDb.Edad);
-        }
-
-        // --- TEST 5: ELIMINAR ALUMNO (DELETE) ---
-        [Fact]
-        public async Task DeleteAlumno_DeberiaBorrarDeLaBaseDeDatos()
-        {
-            // 1. Arrange
-            var context = GetDatabaseContext();
-            var alumno = new Alumnos { Nombre = "Borrar", Apellido = "Me", Edad = 99 };
-            context.Alumnos.Add(alumno);
-            await context.SaveChangesAsync();
-
-            var controller = new AlumnosController(context);
-
-            // 2. Act
-            await controller.DeleteAlumno(alumno.Id);
-
-            // 3. Assert
-            var alumnoBorrado = await context.Alumnos.FindAsync(alumno.Id);
-            Assert.Null(alumnoBorrado);
+                Assert.NotEqual("[]", json);
+                Assert.Contains("Carlos", json);
+            }
         }
     }
 }

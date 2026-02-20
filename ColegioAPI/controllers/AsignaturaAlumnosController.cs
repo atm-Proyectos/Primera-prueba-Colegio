@@ -25,47 +25,38 @@ namespace ColegioAPI.Controllers
         [Authorize]
         public async Task<ActionResult<IEnumerable<object>>> GetMatriculas()
         {
-            // 1. Datos del usuario logueado
             var esProfesor = User.IsInRole("Profesor");
             var esAlumno = User.IsInRole("Alumno");
-            var usuarioLogin = User.Identity?.Name; // Ej: "juanperez"
+            var usuarioLogin = User.Identity?.Name;
 
-            // 2. Nombre Real del Token (para profesores)
-            var identity = HttpContext.User.Identity as System.Security.Claims.ClaimsIdentity;
-            var nombreReal = identity?.FindFirst("NombreReal")?.Value;
-
-            // 3. Traemos TODO de la BD
-            var todasLasMatriculas = await _context.Asignatura_Alumnos
+            // 1. Iniciamos la consulta (IQueryable) para filtrar en la BD, no en memoria 🚀
+            var query = _context.Asignatura_Alumnos
                 .Include(a => a.Alumno)
                 .Include(a => a.Asignatura)
-                .ToListAsync();
-
-            // 4. FILTRADO EN MEMORIA
-            IEnumerable<AsignaturaAlumno> resultados = todasLasMatriculas;
+                .AsQueryable();
 
             if (esProfesor)
             {
-                // El profesor ve las matrículas de SUS asignaturas
-                string nombreBusqueda = !string.IsNullOrEmpty(nombreReal) ? nombreReal : usuarioLogin;
-
-                resultados = todasLasMatriculas
-                    .Where(m => Normalizar(m.Asignatura.Profesor) == Normalizar(nombreBusqueda));
+                query = query.Where(m => m.Asignatura.Profesor == usuarioLogin);
             }
             else if (esAlumno)
             {
-                // === CORRECCIÓN AQUÍ ===
-                // El alumno ve sus propias matrículas.
-                // Como 'Alumno' no tiene campo 'NombreUsuario', lo construimos al vuelo:
-                resultados = todasLasMatriculas
-                    .Where(m => Normalizar(m.Alumno.Nombre + " " + m.Alumno.Apellido) == usuarioLogin);
+                // 2. BUSCAMOS AL ALUMNO por su nombre de usuario en la tabla de Usuarios 🛡️
+                var usuarioDB = await _context.Usuarios
+                    .FirstOrDefaultAsync(u => u.NombreUsuario == usuarioLogin);
+
+                if (usuarioDB != null)
+                {
+                    // Filtramos las matrículas que pertenezcan a ese alumno específico
+                    query = query.Where(m => (m.Alumno.Nombre + m.Alumno.Apellido).ToLower().Replace(" ", "") == usuarioLogin);
+                }
             }
 
-            // 5. Devolver DTO
+            var resultados = await query.ToListAsync();
+
             return Ok(resultados.Select(m => new
             {
                 Id = m.Id,
-                AlumnoId = m.AlumnoId,
-                AsignaturaId = m.AsignaturaId,
                 Alumno = m.Alumno.Nombre + " " + m.Alumno.Apellido,
                 Asignatura = m.Asignatura.Clase,
                 Año = m.AñoEscolar
@@ -87,6 +78,7 @@ namespace ColegioAPI.Controllers
 
             var nuevaMatricula = new AsignaturaAlumno
             {
+                Id = 0,
                 AlumnoId = datos.AlumnoId,
                 AsignaturaId = datos.AsignaturaId,
                 AñoEscolar = DateTime.Now.Year,

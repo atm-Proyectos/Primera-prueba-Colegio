@@ -9,7 +9,7 @@
     <div class="filtros-dashboard" style="display: flex; gap: 10px; align-items: flex-start;">
 
       <div style="flex: 1;">
-        <input type="text" [(ngModel)]="formAlumno.nombre" name="nombre" required minlength="2" maxlength="50"
+        <input type="text" [(ngModel)]="formAlumno.Nombre" name="nombre" required minlength="2" maxlength="50"
           pattern="^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s\.-]+$" placeholder="Nombre" #nombre="ngModel"
           [class.input-error]="nombre.invalid && (nombre.dirty || nombre.touched)" style="width: 100%;">
 
@@ -21,7 +21,7 @@
       </div>
 
       <div style="flex: 1;">
-        <input type="text" [(ngModel)]="formAlumno.apellido" name="apellido" required minlength="2" maxlength="50"
+        <input type="text" [(ngModel)]="formAlumno.Apellido" name="apellido" required minlength="2" maxlength="50"
           pattern="^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s\.-]+$" placeholder="Apellidos" #apellido="ngModel"
           [class.input-error]="apellido.invalid && (apellido.dirty || apellido.touched)" style="width: 100%;">
 
@@ -31,7 +31,7 @@
       </div>
 
       <div style="width: 100px;">
-        <input type="number" [(ngModel)]="formAlumno.edad" name="edad" required min="3" max="100" placeholder="Edad"
+        <input type="number" [(ngModel)]="formAlumno.Edad" name="edad" required min="3" max="100" placeholder="Edad"
           #edad="ngModel" [class.input-error]="edad.invalid && (edad.dirty || edad.touched)" style="width: 100%;">
 
         <small *ngIf="edad.invalid && (edad.dirty || edad.touched)" class="msg-error">
@@ -40,10 +40,10 @@
       </div>
 
       <button type="submit" class="btn-guardar" [disabled]="formAlu.invalid">
-        {{ formAlumno.id === 0 ? '➕ Añadir' : '💾 Actualizar' }}
+        {{ formAlumno.Id === 0 ? '➕ Añadir' : '💾 Actualizar' }}
       </button>
 
-      <button type="button" *ngIf="formAlumno.id !== 0" (click)="limpiar()" class="btn-borrar"
+      <button type="button" *ngIf="formAlumno.Id !== 0" (click)="limpiar()" class="btn-borrar"
         style="background-color: #7f8c8d;">
         Cancelar
       </button>
@@ -57,6 +57,7 @@
   <table class="tabla-datos" *ngIf="!(cargando$ | async)">
     <thead>
       <tr>
+        <th>Id</th>
         <th>Nombre</th>
         <th>Apellidos</th>
         <th>Edad</th>
@@ -65,23 +66,16 @@
     </thead>
     <tbody>
       <tr *ngFor="let alumno of alumnos$ | async">
-        <td>{{ alumno.nombre }}</td>
-        <td>{{ alumno.apellido }}</td>
-        <td>{{ alumno.edad }} años</td>
-
+        <td>{{ alumno.Id }}</td>
+        <td>{{ alumno.Nombre }}</td>
+        <td>{{ alumno.Apellido }}</td>
+        <td>{{ alumno.Edad }} años</td>
         <td>
           <ng-container *ngIf="api.soyAdmin()">
-            <button (click)="editar(alumno)" class="btn-editar" title="Editar">✏️</button>
-            <button (click)="eliminar(alumno.id)" class="btn-borrar" title="Eliminar">🗑️</button>
-            <button (click)="abrirMatriculas(alumno)" class="btn-matricular" title="Gestionar asignaturas">🎓</button>
+            <button (click)="editar(alumno)" class="btn-editar">✏️</button>
+            <button (click)="eliminar(alumno.Id)" class="btn-borrar">🗑️</button>
+            <button (click)="abrirMatriculas(alumno)" class="btn-matricular">🎓</button>
           </ng-container>
-
-        </td>
-      </tr>
-
-      <tr *ngIf="(alumnos$ | async)?.length === 0">
-        <td colspan="4" style="text-align:center; padding: 20px; color: #777;">
-          No hay alumnos registrados.
         </td>
       </tr>
     </tbody>
@@ -89,13 +83,13 @@
 
   <div class="modal-overlay" *ngIf="modoMatricula">
     <div class="modal-content">
-      <h3>🎓 Matrículas de: {{ alumnoSeleccionado?.nombre }}</h3>
+      <h3>🎓 Matrículas de: {{ alumnoSeleccionado?.Nombre }}</h3>
 
       <div class="form-matricula">
         <select [(ngModel)]="asignaturaParaMatricular" style="flex:1; margin-right:5px;">
           <option [ngValue]="null">-- Elegir Asignatura --</option>
-          <option *ngFor="let asig of listaAsignaturas" [ngValue]="asig.id">
-            {{ asig.clase }}
+          <option *ngFor="let asig of listaAsignaturas" [ngValue]="asig.Id">
+            {{ asig.Clase }}
           </option>
         </select>
         <button (click)="matricular()" class="btn-guardar" [disabled]="!asignaturaParaMatricular">
@@ -107,8 +101,8 @@
 
       <ul class="lista-asignaturas">
         <li *ngFor="let m of matriculasAlumno">
-          {{ m.asignatura }}
-          <button (click)="eliminarMatricula(m.id)" style="background:none; border:none; cursor:pointer;"
+          {{ m.Asignatura }}
+          <button (click)="eliminarMatricula(m.Id)" style="background:none; border:none; cursor:pointer;"
             title="Desmatricular">
             ❌
           </button>

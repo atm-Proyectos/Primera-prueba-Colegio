@@ -19,6 +19,23 @@ describe('ApiService (Tests de Robustez)', () => {
     httpMock.verify();
   });
 
+  it('debería devolver el nombre del usuario si hay un token válido', () => {
+    // 1. Arrange (Organizar)
+    // Inventamos un token falso (un JWT simplificado)
+    const tokenFalso = 'header.' + btoa(JSON.stringify({ unique_name: 'Pablo Lopez' })) + '.signature';
+
+    // Creamos el espía: Cuando se llame a getItem('token'), devolverá nuestro tokenFalso
+    spyOn(localStorage, 'getItem').and.callFake((key: string) => {
+      return key === 'token' ? tokenFalso : null;
+    });
+
+    // 2. Act (Actuar)
+    const resultado = service.getUserName();
+
+    // 3. Assert (Afirmar)
+    expect(resultado).toBe('Pablo Lopez');
+  });
+
   it('✅ Debería crearse el servicio correctamente', () => {
     expect(service).toBeTruthy();
   });

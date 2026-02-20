@@ -84,16 +84,16 @@
   </thead>
   <tbody>
     <tr *ngFor="let nota of notas$ | async">
-      <td>{{ nota.nombreAlumno || 'Yo' }}</td>
-      <td>{{ nota.nombreAsignatura || 'General' }}</td>
+      <td>{{ nota.NombreAlumno || 'Yo' }}</td>
+      <td>{{ nota.NombreAsignatura || 'General' }}</td>
       <td>
-        <span class="badge-nota" [ngClass]="nota.valor >= 5 ? 'aprobado' : 'suspenso'">
-          {{ nota.valor }}
+        <span class="badge-nota" [ngClass]="nota.Valor >= 5 ? 'aprobado' : 'suspenso'">
+          {{ nota.Valor }}
         </span>
       </td>
       <td *ngIf="!api.soyAlumno()" style="display: flex; gap: 5px; justify-content: center;">
         <button (click)="editar(nota)" class="btn-editar">✏️</button>
-        <button (click)="eliminar(nota.id)" class="btn-eliminar">🗑️</button>
+        <button (click)="eliminar(nota.Id)" class="btn-eliminar">🗑️</button>
       </td>
     </tr>
   </tbody>

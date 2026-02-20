@@ -21,10 +21,10 @@ export class AlumnosComponent implements OnInit {
   mensajeError: string = "";
 
   formAlumno: Alumnos = {
-    id: 0,
-    nombre: "",
-    apellido: "",
-    edad: 0
+    Id: 0,
+    Nombre: "",
+    Apellido: "",
+    Edad: 0
   };
 
   modoMatricula: boolean = false;
@@ -58,20 +58,20 @@ export class AlumnosComponent implements OnInit {
   }
 
   guardar() {
-    if (!this.formAlumno.nombre || !this.formAlumno.apellido || this.formAlumno.edad <= 0) {
+    if (!this.formAlumno.Nombre || !this.formAlumno.Apellido || this.formAlumno.Edad <= 0) {
       Swal.fire('Error', 'Rellena todos los campos correctamente', 'error');
       return;
     }
 
-    const peticion = this.formAlumno.id === 0
+    const peticion = this.formAlumno.Id === 0
       ? this.api.guardarAlumno(this.formAlumno)
-      : this.api.editarAlumno(this.formAlumno.id, this.formAlumno);
+      : this.api.editarAlumno(this.formAlumno.Id, this.formAlumno);
 
     peticion.subscribe({
       next: () => {
         Swal.fire({
           icon: 'success',
-          title: this.formAlumno.id === 0 ? '¡Registrado!' : '¡Actualizado!',
+          title: this.formAlumno.Id === 0 ? '¡Registrado!' : '¡Actualizado!',
           text: 'Los datos se han guardado correctamente.',
           timer: 2000,
           showConfirmButton: false
@@ -90,7 +90,7 @@ export class AlumnosComponent implements OnInit {
     this.formAlumno = { ...alumno };
   }
 
-  eliminar(id: number) {
+  eliminar(Id: number) {
     Swal.fire({
       title: '¿Estás seguro?',
       text: "Se borrará el alumno y todas sus notas.",
@@ -101,7 +101,7 @@ export class AlumnosComponent implements OnInit {
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
-        this.api.eliminarAlumno(id).subscribe({
+        this.api.eliminarAlumno(Id).subscribe({
           next: () => {
             Swal.fire('Borrado', 'El alumno ha sido eliminado.', 'success');
             // Recargamos los datos del Store
@@ -115,10 +115,10 @@ export class AlumnosComponent implements OnInit {
 
   limpiar() {
     this.formAlumno = {
-      id: 0,
-      nombre: "",
-      apellido: "",
-      edad: 0
+      Id: 0,
+      Nombre: "",
+      Apellido: "",
+      Edad: 0
     }
   }
 
@@ -147,14 +147,14 @@ export class AlumnosComponent implements OnInit {
 
   filtrarMatriculas() {
     if (this.alumnoSeleccionado) {
-      this.matriculasAlumno = this.listaMatriculas.filter(m => m.alumnoId === this.alumnoSeleccionado.id);
+      this.matriculasAlumno = this.listaMatriculas.filter(m => m.AlumnoId === this.alumnoSeleccionado.Id);
     }
   }
 
   matricular() {
     if (!this.asignaturaParaMatricular) return;
 
-    this.api.matricular(this.alumnoSeleccionado.id, this.asignaturaParaMatricular).subscribe({
+    this.api.matricular(this.alumnoSeleccionado.Id, this.asignaturaParaMatricular).subscribe({
       next: () => {
         // ✅ 1. ÉXITO: Mostramos un mensaje temporal (Toast)
         const Toast = Swal.mixin({
@@ -196,7 +196,7 @@ export class AlumnosComponent implements OnInit {
     });
   }
 
-  eliminarMatricula(id: number) {
+  eliminarMatricula(Id: number) {
     Swal.fire({
       title: '¿Quitar asignatura?',
       text: "Se perderán las notas asociadas si las hay.",
@@ -206,7 +206,7 @@ export class AlumnosComponent implements OnInit {
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
-        this.api.eliminarMatricula(id).subscribe({
+        this.api.eliminarMatricula(Id).subscribe({
           next: () => {
             Swal.fire('Eliminado', 'Matrícula anulada', 'success');
             this.api.getMatriculas().subscribe(data => {

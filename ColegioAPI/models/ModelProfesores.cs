@@ -4,9 +4,9 @@ namespace ColegioAPI.models
 {
     public class Profesores
     {
-        public int Id { get; set; }
+        public required int Id { get; set; }
 
         [Required]
-        public string Nombre { get; set; } = string.Empty;
+        public required string Nombre { get; set; } = string.Empty;
     }
 }

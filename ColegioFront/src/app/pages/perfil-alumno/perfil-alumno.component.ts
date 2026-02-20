@@ -65,10 +65,9 @@ export class PerfilAlumnoComponent implements OnInit {
     this.api.getStatsAlumno().subscribe({
       next: (data) => {
         this.stats = data;
-        // Aquí asignamos la lista que viene del C#
-        this.asignaturas = data.asignaturas;
-        // Y los datos para la tarta
-        this.ratioAprobados = data.statsTarta;
+        // Sincronización con PascalCase del Backend
+        this.asignaturas = data.Asignaturas || [];
+        this.ratioAprobados = data.StatsTarta || [];
         this.cargando = false;
       },
       error: (err) => {
