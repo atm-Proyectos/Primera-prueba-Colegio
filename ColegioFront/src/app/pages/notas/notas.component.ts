@@ -82,15 +82,20 @@ export class NotasComponent implements OnInit {
   // 2. Función auxiliar para reutilizar lógica (sin borrar selecciones)
   cargarAsignaturasParaAlumno(AlumnoId: number) {
     if (AlumnoId) {
-      // Filtramos las matrículas de ese alumno
-      const matriculasDelAlumno = this.listaMatriculas.filter(m => m.AlumnoId == AlumnoId);
+      // 1. Buscamos el nombre del alumno para poder filtrar
+      const alumno = this.listaAlumnos.find(a => a.Id == AlumnoId);
+      const nombreCompleto = alumno ? `${alumno.Nombre} ${alumno.Apellido}`.trim() : "";
 
-      // Cruzamos con la lista de asignaturas para sacar el nombre
+      // 2. Filtramos la lista de matrículas comparando el texto
+      const matriculasDelAlumno = this.listaMatriculas.filter(m =>
+        m.Alumno === nombreCompleto || m.Alumno?.trim() === nombreCompleto
+      );
+
+      // 3. Mapeamos directamente al desplegable
       this.listaAsignaturasDelAlumno = matriculasDelAlumno.map(m => {
-        const asignaturaOriginal = this.listaAsignaturas.find(a => a.Id == m.AsignaturaId);
         return {
-          Id: m.AsignaturaId,
-          Nombre: asignaturaOriginal ? asignaturaOriginal.Clase : ('Asignatura ' + m.AsignaturaId)
+          Id: m.Id, // ¡OJO! Este es el ID de la matrícula (AsignaturaAlumnoId), que nos viene perfecto.
+          Nombre: m.Asignatura
         };
       });
     } else {
@@ -128,6 +133,7 @@ export class NotasComponent implements OnInit {
   guardar() {
     // Validaciones previas
     if (!this.formSeleccion.AlumnoId || !this.formSeleccion.AsignaturaId) {
+<<<<<<< Updated upstream
       this.mensajeError = "Selecciona alumno y asignatura.";
       return;
     }
@@ -148,10 +154,22 @@ export class NotasComponent implements OnInit {
     }
 
     // Objeto a enviar
+=======
+      Swal.fire({ icon: 'error', title: 'Error', text: 'Selecciona alumno y asignatura.' });
+      return;
+    }
+    if (this.valorNota === null || this.valorNota === undefined) {
+      Swal.fire({ icon: 'error', title: 'Error', text: 'Escribe una nota válida.' });
+      return;
+    }
+
+    // Como nuestro desplegable ya devuelve el ID de la matrícula directamente,
+    // ¡nos ahorramos tener que buscarla!
+>>>>>>> Stashed changes
     const notaAGuardar = {
-      Id: this.notaIdEditar, // 0 si es nueva, ID si es editar
-      Valor: this.valorNota, // Usamos la variable vinculada
-      AsignaturaAlumnoId: matricula.Id
+      Id: this.notaIdEditar,
+      Valor: this.valorNota,
+      AsignaturaAlumnoId: this.formSeleccion.AsignaturaId // Este ya es el ID correcto
     };
 
     if (this.notaIdEditar === 0) {
@@ -182,35 +200,23 @@ export class NotasComponent implements OnInit {
     this.notaIdEditar = nota.Id;
     this.valorNota = nota.Valor;
 
-    // Buscamos la matrícula basada en la relación guardada en la nota
-    // Esto es más seguro que buscar por IDs sueltos
+    // Buscamos la matrícula por su ID
     let matricula = this.listaMatriculas.find(m => m.Id === nota.AsignaturaAlumnoId);
 
-    // Fallback: Si no viene asignaturaAlumnoId, intentamos buscar por los objetos anidados (si tu API los devuelve)
-    if (!matricula && nota.AsignaturaAlumno) {
-      matricula = this.listaMatriculas.find(m => m.Id === nota.AsignaturaAlumno.Id);
-    }
-
     if (matricula) {
-      // 1. Seteamos Alumno
-      this.formSeleccion.AlumnoId = matricula.AlumnoId;
+      // Buscamos al alumno por su nombre para seleccionar el ID en el primer desplegable
+      const alumnoObj = this.listaAlumnos.find(a => `${a.Nombre} ${a.Apellido}`.trim() === matricula?.Alumno);
 
-      // 2. Cargamos sus asignaturas SIN borrar la selección (usamos la función auxiliar)
-      this.cargarAsignaturasParaAlumno(matricula.AlumnoId);
-
-      // 3. Seteamos Asignatura
-      this.formSeleccion.AsignaturaId = matricula.AsignaturaId;
+      if (alumnoObj) {
+        this.formSeleccion.AlumnoId = alumnoObj.Id;
+        this.cargarAsignaturasParaAlumno(alumnoObj.Id);
+        this.formSeleccion.AsignaturaId = matricula.Id;
+      }
     } else {
       console.warn("No se encontró la matrícula para editar esta nota");
     }
 
-    Swal.fire({
-      icon: 'info',
-      title: 'Modo Edición',
-      text: 'Modifica el valor y guarda.',
-      timer: 1500,
-      showConfirmButton: false
-    });
+    Swal.fire({ icon: 'info', title: 'Modo Edición', text: 'Modifica el valor y guarda.', timer: 1500, showConfirmButton: false });
   }
 
   limpiar() {

@@ -147,7 +147,20 @@ export class AlumnosComponent implements OnInit {
 
   filtrarMatriculas() {
     if (this.alumnoSeleccionado) {
-      this.matriculasAlumno = this.listaMatriculas.filter(m => m.AlumnoId === this.alumnoSeleccionado.Id);
+      const nombreCompleto = `${this.alumnoSeleccionado.Nombre} ${this.alumnoSeleccionado.Apellido}`.trim();
+
+      // 1. Filtramos por el texto del nombre que nos manda C#
+      let susMatriculas = this.listaMatriculas.filter(m =>
+        m.Alumno === nombreCompleto || m.Alumno?.trim() === nombreCompleto
+      );
+
+      // 2. Mapeamos para que tu HTML pueda leer la variable "NombreClase"
+      this.matriculasAlumno = susMatriculas.map(m => {
+        return {
+          ...m,
+          NombreClase: m.Asignatura || 'Desconocida'
+        };
+      });
     }
   }
 

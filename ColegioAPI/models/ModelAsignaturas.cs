@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using System.Reflection.Metadata.Ecma335;
 using System.Text.Json.Serialization;
+using ColegioAPI.models;
 
 namespace ColegioAPI.models
 {
@@ -16,6 +18,6 @@ namespace ColegioAPI.models
         public string Profesor { get; set; } = string.Empty;
 
         [JsonIgnore]
-        public required List<AsignaturaAlumno>? AsignaturaAlumnos { get; set; }
+        public List<AsignaturaAlumno>? AsignaturaAlumnos { get; set; }
     }
 }

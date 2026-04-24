@@ -23,7 +23,11 @@ export class LoginComponent {
     // Llamamos al servicio y le pasamos un objeto con next y error
     this.api.login(credenciales).subscribe({
       next: (data: any) => {
+<<<<<<< Updated upstream
         console.log('Login correcto:', data);
+=======
+        Swal.close();
+>>>>>>> Stashed changes
         // Guardamos el token en localStorage, así que solo pedimos el rol
         const rol = this.api.getRol();
         if (rol === 'Admin') {
@@ -35,8 +39,18 @@ export class LoginComponent {
         }
       },
       error: (err: any) => {
+<<<<<<< Updated upstream
         console.error('Error en el login:', err);
         this.error = 'Usuario o contraseña incorrectos';
+=======
+        Swal.close();
+        Swal.fire({
+          icon: 'error',
+          title: 'Error en el login',
+          text: 'Usuario o contraseña incorrectos',
+          confirmButtonText: 'Aceptar'
+        });
+>>>>>>> Stashed changes
       }
     });
   }

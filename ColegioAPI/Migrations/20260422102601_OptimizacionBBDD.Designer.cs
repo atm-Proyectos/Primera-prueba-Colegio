@@ -3,6 +3,7 @@ using System;
 using ColegioAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ColegioAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260422102601_OptimizacionBBDD")]
+    partial class OptimizacionBBDD
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -44,12 +47,6 @@ namespace ColegioAPI.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Apellido")
-                        .HasDatabaseName("IX_Alumnos_Apellido");
-
-                    b.HasIndex("Nombre", "Apellido")
-                        .HasDatabaseName("IX_Alumnos_NombreApellido");
 
                     b.ToTable("Alumnos");
                 });
@@ -106,35 +103,6 @@ namespace ColegioAPI.Migrations
                     b.ToTable("Asignaturas");
                 });
 
-            modelBuilder.Entity("ColegioAPI.models.AuditoriaNota", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AsignaturaAlumnoId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("Fecha")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<double?>("NotaAntigua")
-                        .HasColumnType("double precision");
-
-                    b.Property<double?>("NotaNueva")
-                        .HasColumnType("double precision");
-
-                    b.Property<string>("Operacion")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AuditoriaNotas");
-                });
-
             modelBuilder.Entity("ColegioAPI.models.Notas", b =>
                 {
                     b.Property<int>("Id")
@@ -153,9 +121,6 @@ namespace ColegioAPI.Migrations
 
                     b.HasIndex("AsignaturaAlumnoId")
                         .IsUnique();
-
-                    b.HasIndex("Valor")
-                        .HasDatabaseName("IX_Notas_Valor");
 
                     b.ToTable("Notas");
                 });
@@ -200,32 +165,6 @@ namespace ColegioAPI.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Usuarios");
-                });
-
-            modelBuilder.Entity("ColegioAPI.models.VistaBoletin", b =>
-                {
-                    b.Property<string>("ApellidoAlumno")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Clase")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("NombreAlumno")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Profesor")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<double>("ValorNota")
-                        .HasColumnType("double precision");
-
-                    b.ToTable((string)null);
-
-                    b.ToView("Vista_Boletines_Alumnos", (string)null);
                 });
 
             modelBuilder.Entity("ColegioAPI.models.AsignaturaAlumno", b =>

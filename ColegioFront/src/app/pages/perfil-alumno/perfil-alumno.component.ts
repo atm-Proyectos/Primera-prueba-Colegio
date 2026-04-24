@@ -71,9 +71,48 @@ export class PerfilAlumnoComponent implements OnInit {
         this.cargando = false;
       },
       error: (err) => {
-        console.error("Error al cargar dashboard", err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'No se pudo cargar el dashboard',
+          confirmButtonText: 'Aceptar'
+        })
         this.cargando = false;
       }
+<<<<<<< Updated upstream
+=======
+
+    });
+  }
+
+  descargarPDF() {
+    // Al usar HttpClient, tu interceptor añadirá el Token automáticamente
+    this.http.get(`http://localhost:5141/api/Notas/exportar-pdf`, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Boletin_${this.nombreUsuario}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        Swal.fire({
+          icon: 'success',
+          title: 'PDF descargado correctamente',
+          text: 'El PDF se ha descargado correctamente',
+          confirmButtonText: 'Aceptar'
+        });
+      },
+      error: (err) => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al descargar el PDF',
+          text: 'Por favor, intenta nuevamente',
+          confirmButtonText: 'Aceptar'
+        });
+      }
+>>>>>>> Stashed changes
     });
   }
 }

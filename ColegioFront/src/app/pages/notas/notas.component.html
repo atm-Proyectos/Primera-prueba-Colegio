@@ -12,13 +12,13 @@
 
         <div style="flex: 1;">
           <label class="form-label">Alumno:</label>
-          <select class="form-control" [(ngModel)]="formSeleccion.alumnoId" name="alumnoId" required
+          <select class="form-control" [(ngModel)]="formSeleccion.AlumnoId" name="alumnoId" required
             style="width: 100%;" (change)="alCambiarAlumno()" #alumnoRef="ngModel"
             [class.input-error]="alumnoRef.invalid && (alumnoRef.dirty || alumnoRef.touched)">
 
             <option [ngValue]="null">-- Selecciona Alumno --</option>
-            <option *ngFor="let alu of listaAlumnos" [ngValue]="alu.id">
-              {{ alu.nombre }} {{ alu.apellido }}
+            <option *ngFor="let alu of listaAlumnos" [ngValue]="alu.Id">
+              {{ alu.Nombre }} {{ alu.Apellido }}
             </option>
           </select>
 
@@ -29,17 +29,17 @@
 
         <div style="flex: 1;">
           <label class="form-label">Asignatura:</label>
-          <select class="form-control" [(ngModel)]="formSeleccion.asignaturaId" name="asignaturaId" required
+          <select class="form-control" [(ngModel)]="formSeleccion.AsignaturaId" name="asignaturaId" required
             style="width: 100%;" [disabled]="listaAsignaturasDelAlumno.length === 0" #asigRef="ngModel"
             [class.input-error]="asigRef.invalid && (asigRef.dirty || asigRef.touched)">
 
             <option [ngValue]="null">-- Selecciona Asignatura --</option>
-            <option *ngFor="let asig of listaAsignaturasDelAlumno" [ngValue]="asig.id">
-              {{ asig.nombre }}
+            <option *ngFor="let asig of listaAsignaturasDelAlumno" [ngValue]="asig.Id">
+              {{ asig.Nombre }}
             </option>
           </select>
 
-          <small *ngIf="formSeleccion.alumnoId && listaAsignaturasDelAlumno.length === 0" class="msg-error"
+          <small *ngIf="formSeleccion.AlumnoId && listaAsignaturasDelAlumno.length === 0" class="msg-error"
             style="color: orange;">
             Este alumno no tiene asignaturas contigo.
           </small>

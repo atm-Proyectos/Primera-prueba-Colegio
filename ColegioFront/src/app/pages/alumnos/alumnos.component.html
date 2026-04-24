@@ -47,6 +47,13 @@
         style="background-color: #7f8c8d;">
         Cancelar
       </button>
+<<<<<<< Updated upstream
+=======
+      <button type="button" (click)="exportarExcel()"
+        style="background-color: #27ae60; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+        📊 Exportar a Excel
+      </button>
+>>>>>>> Stashed changes
     </div>
   </form>
 
@@ -101,7 +108,7 @@
 
       <ul class="lista-asignaturas">
         <li *ngFor="let m of matriculasAlumno">
-          {{ m.Asignatura }}
+          {{ m.NombreClase }}
           <button (click)="eliminarMatricula(m.Id)" style="background:none; border:none; cursor:pointer;"
             title="Desmatricular">
             ❌

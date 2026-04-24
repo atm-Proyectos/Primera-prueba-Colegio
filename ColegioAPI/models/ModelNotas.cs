@@ -9,11 +9,11 @@ namespace ColegioAPI.models
 
         [Required(ErrorMessage = "El valor es obligatorio")]
         [Range(0, 10, ErrorMessage = "El valor debe estar entre 0 y 10")]
-        public required decimal Valor { get; set; }
+        public decimal Valor { get; set; }
 
         [Required]
-        public required int AsignaturaAlumnoId { get; set; }
+        public int AsignaturaAlumnoId { get; set; }
         [ForeignKey("AsignaturaAlumnoId")]
-        public required AsignaturaAlumno? AsignaturaAlumno { get; set; }
+        public AsignaturaAlumno? AsignaturaAlumno { get; set; }
     }
 }

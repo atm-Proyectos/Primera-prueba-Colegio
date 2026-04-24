@@ -154,26 +154,33 @@ namespace ColegioAPI.Controllers
         [Authorize(Roles = "Admin,Profesor")]
         public async Task<ActionResult<Notas>> PostNota(Notas nota)
         {
-            // 1. Validación manual de rango 📏
-            if (nota.Valor < 0 || nota.Valor > 10)
+            try
             {
-                return BadRequest(new { mensaje = "¡Error! La nota debe estar entre 0 y 10." });
+                // Limpiamos el objeto de navegación por si acaso Angular envió algo ahí
+                nota.AsignaturaAlumno = null;
+
+                // 1. Verificamos si ya existe en la DB (aunque no se vea en tu pantalla)
+                var existe = await _context.Notas.AnyAsync(n => n.AsignaturaAlumnoId == nota.AsignaturaAlumnoId);
+                if (existe)
+                {
+                    return BadRequest(new { mensaje = "Conflicto: Esta matrícula ya tiene una nota registrada en la base de datos." });
+                }
+
+                _context.Notas.Add(nota);
+                await _context.SaveChangesAsync();
+                return CreatedAtAction(nameof(GetNotas), new { id = nota.Id }, nota);
             }
-
-            // 2. Validación de existencia de matrícula 🛡️
-            var existeMatricula = await _context.Asignatura_Alumnos
-                .AnyAsync(aa => aa.Id == nota.AsignaturaAlumnoId);
-
-            if (!existeMatricula)
+            catch (DbUpdateException ex)
             {
-                return BadRequest(new { mensaje = "La matrícula especificada no existe." });
+                // Si el error viene de la base de datos (como el índice único)
+                return StatusCode(500, new { mensaje = "Error de base de datos: ¿Quizás la nota ya existe?", detalle = ex.InnerException?.Message });
             }
-
-            _context.Notas.Add(nota);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetNotas), new { id = nota.Id }, nota);
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { mensaje = "Error inesperado", detalle = ex.Message });
+            }
         }
+
 
         // DELETE
         [HttpDelete("{id}")]
