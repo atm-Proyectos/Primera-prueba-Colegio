@@ -1,97 +1,80 @@
-# 🎓 ColegioApp - Sistema de Gestión Escolar
+# 🎓 ColegioApp - Sistema de Gestión Escolar Avanzado
 
-Bienvenido a **ColegioApp**, una aplicación web completa para la gestión administrativa de un centro educativo. Permite administrar alumnos, asignaturas y calificaciones de manera intuitiva y rápida.
-
----
-
-## 🚀 Tecnologías Utilizadas
-
-Este proyecto es una aplicación **Full Stack** dividida en dos partes principales:
-
-### 🎨 Frontend (Cliente)
-
-- **Angular 16+**: Framework principal.
-- **TypeScript**: Lógica de componentes y servicios.
-- **HTML5 & CSS3**: Diseño responsivo y limpio.
-
-### ⚙️ Backend (Servidor)
-
-- **ASP.NET Core Web API**: API RESTful robusta.
-- **C#**: Lenguaje del servidor.
-- **Entity Framework Core**: ORM para gestión de datos.
+Bienvenido a **ColegioApp**, una aplicación web Full Stack para la gestión administrativa integral de un centro educativo. Este sistema permite administrar alumnos, asignaturas, calificaciones y auditorías de manera intuitiva, segura y escalable.
 
 ---
 
-## 📂 Estructura del Proyecto
+## 🚀 Stack Tecnológico
 
-El repositorio está organizado en dos carpetas principales:
+El proyecto está dividido en dos capas totalmente desacopladas:
 
-```text
-Colegio/
-├── ColegioAPI/      # Backend (.NET Web API)
-└── ColegioFront/    # Frontend (Angular Project)
-```
+### 🎨 Frontend (Cliente SPA)
 
-## 🛠️ Instalación y Ejecución
+- **Angular 17+**: Framework principal.
+- **NgRx**: Gestión de estado reactiva (Store, Actions, Selectors).
+- **TypeScript & HTML5/CSS3**: Lógica y diseño responsivo.
+- **Librerías extra**: `ngx-charts` (gráficos) y `SweetAlert2` (notificaciones).
 
-Sigue estos pasos para arrancar el proyecto en tu máquina local.
+### ⚙️ Backend (Servidor API REST)
+
+- **ASP.NET Core Web API (.NET 8)**: Servidor robusto y seguro.
+- **C#**: Lenguaje principal.
+- **Entity Framework Core**: ORM (Code-First).
+- **PostgreSQL**: Base de datos relacional avanzada.
+- **Autenticación**: JWT (JSON Web Tokens) con Autorización por Roles.
+- **Librerías extra**: `QuestPDF` (exportación a PDF) y utilidades para Excel.
+
+---
+
+## ✨ Características Destacadas (Funcionalidades Avanzadas)
+
+- **Arquitectura de Base de Datos Nativa**:
+  - **Triggers (Disparadores)**: Sistema de auditoría automática que registra silenciosamente cualquier modificación (`UPDATE`) o borrado (`DELETE`) de notas por parte de los profesores.
+  - **Funciones Escalares**: Cálculos matemáticos (como la nota media) ejecutados directamente en PostgreSQL para maximizar el rendimiento.
+  - **Vistas (Views)**: Estructuras pre-calculadas en base de datos para la generación ultra-rápida de boletines de notas.
+  - **Índices Únicos**: Restricciones a nivel de esquema para evitar matemáticamente la duplicidad de matrículas y notas.
+- **Exportación de Datos**: Generación dinámica de boletines en PDF y reportes de alumnos en Excel.
+- **Dashboard Estadístico**: Gráficas en tiempo real de aprobados/suspensos, medias globales y demografía.
+
+---
+
+## 🛠️ Guía de Instalación y Despliegue Local
+
+Sigue estos pasos para arrancar el proyecto en tu máquina desde cero.
 
 ### 1. Prerrequisitos
 
-Asegúrate de tener instalado:
+Asegúrate de tener instalado en tu ordenador:
 
-- **Node.js** (para Angular).
-- **.NET SDK** (versión 7 u 8).
-- **Angular CLI** (npm install -g @angular/cli).
+- [Node.js](https://nodejs.org/) (Versión LTS recomendada).
+- [.NET 8 SDK](https://dotnet.microsoft.com/download).
+- [PostgreSQL](https://www.postgresql.org/download/) y pgAdmin (opcional pero recomendado).
+- Angular CLI global: Ejecuta `npm install -g @angular/cli`.
 
-### 2. Arrancar el Backend (API)
+### 2. Configurar la Base de Datos
 
-La API debe estar corriendo para que el Frontend pueda obtener datos.
+El proyecto usa **Code-First**, por lo que la base de datos se crea sola, pero necesitas configurar tu conexión.
 
-```bash
-cd ColegioAPI
+1. Abre el archivo `ColegioAPI/appsettings.json`.
+2. Busca la sección `"ConnectionStrings"` y modifica la cadena `"DefaultConnection"` con tu usuario y contraseña de PostgreSQL local:
+   ```json
+   "DefaultConnection": "Host=localhost;Database=ColegioDB;Username=TU_USUARIO;Password=TU_CONTRASEÑA"
+   Abre una terminal en la carpeta ColegioAPI y ejecuta las migraciones para crear las tablas, funciones y triggers:
+   ```
+
+Bash
+dotnet ef database update 3. Arrancar el Backend (API)
+Manteniendo la terminal en la carpeta ColegioAPI, ejecuta:
+
+Bash
 dotnet restore
 dotnet run
-```
+La API se iniciará normalmente en http://localhost:5141 (o el puerto indicado en la consola).
 
-La API se iniciará normalmente en: http://localhost:5141
+4. Arrancar el Frontend (Angular)
+   Abre una nueva terminal (sin cerrar la del backend) y dirígete a la carpeta ColegioFront:
 
-### 3. Arrancar el Frontend (Angular)
-
-Abre una nueva terminal (no cierres la del backend).
-
-```bash
-cd ColegioFront
-npm install    # Solo la primera vez para instalar dependencias
+Bash
+npm install # Solo la primera vez para descargar módulos
 ng serve -o
-```
-
-La web se abrirá automáticamente en: http://localhost:4200
-
-## ✨ Funcionalidades Principales
-
-### 🏠 Dashboard Principal:
-
-Buscador global en tiempo real.
-
-Vista rápida de notas recientes y estados (Aprobado/Suspenso).
-
-### 👨‍🎓 Gestión de Alumnos:
-
-Registrar nuevos alumnos.
-
-Editar datos personales.
-
-Dar de baja alumnos.
-
-### 📚 Gestión de Asignaturas:
-
-Crear clases y asignar profesores.
-
-Listado completo de materias.
-
-### 📝 Control de Notas:
-
-Asignar calificaciones a un alumno en una asignatura específica.
-
-Validación de datos y cálculo de estados.
+La web se abrirá automáticamente en tu navegador en http://localhost:4200.
